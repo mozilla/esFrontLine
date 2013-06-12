@@ -13,8 +13,8 @@ This project is in development.  Please note the ```requirements.txt``` file is 
 to the most recent version of pyLibrary, which could be unstable
 
 
-Installation (for Windows)
-==========================
+Installation
+============
 
 I will assume you have python installed:
 
@@ -37,6 +37,6 @@ The settings file is a flexible JSON file with the following values set:
 
   * **elasticsearch.port** - port for ES (default = 9200)
 
-  * **proxy.port** - is the port that this application will listen on (default 5000)
+  * **listen.port** - is the port that this application will listen on (default 5000)
 
   * **debug** - turn on debugging
