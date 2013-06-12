@@ -43,17 +43,16 @@ def catch_all(path):
         h=dict(r.headers)
         h["access-control-allow-origin"]="*"
 
-        if (settings.debug):
-            D.println("path: ${path}, request bytes=${request_content_length}, response bytes=${response_content_length}", {
-                "path":path,
-                "request_headers":dict(r.headers),
-                "request_content_length":len(data),
-                "response_headers":h,
-                "response_content_length":len(r.content)
-            })
+
+        D.println("path: ${path}, request bytes=${request_content_length}, response bytes=${response_content_length}", {
+            "path":path,
+            "request_headers":dict(r.headers),
+            "request_content_length":len(data),
+            "response_headers":h,
+            "response_content_length":len(r.content)
+        })
 
 
-            Template("")
         ## FORWARD RESPONSE
         return flask.wrappers.Response(
             r.content,
@@ -62,7 +61,7 @@ def catch_all(path):
         )
     except Exception, e:
         D.warning("processing problem", e)
-
+        abort(404)
 
 
 
