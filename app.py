@@ -6,6 +6,7 @@
 ## Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 ################################################################################
 from string import Template
+from test.test_zlib import zlib
 
 from flask import Flask
 import flask
@@ -40,43 +41,60 @@ def catch_all(path):
             timeout=90
         )
 
+        # ALLOW CROSS DOMAIN (BECAUSE ES IS USUALLY NOT ON SAME SERVER AS PAGE)
         h=dict(r.headers)
         h["access-control-allow-origin"]="*"
 
+        # RE-ZIP RESPONSE CONTENT (DOES NOT WORK)
+        content=r.content
+#        if len(content)>1000:
+#            h["content-encoding"]="gzip"
+#            content=zlib.compress(content)
+#        else:
+#            h["content-encoding"]="text"
+        h["content-encoding"]="text"
 
-        D.println("path: ${path}, request bytes=${request_content_length}, response bytes=${response_content_length}", {
+        h["content-length"]=str(len(content))
+
+
+        D.println("path: ${path}, request bytes=${request_content_length}, response bytes=${response_content_length} (${response_content}...)", {
             "path":path,
             "request_headers":dict(r.headers),
             "request_content_length":len(data),
             "response_headers":h,
-            "response_content_length":len(r.content)
+            "response_content_length":h["content-length"],
+            "response_content":r.content[0:100]
         })
 
 
         ## FORWARD RESPONSE
         return flask.wrappers.Response(
-            r.content,
+            response=content,
             status=r.status_code,
             headers=h
         )
     except Exception, e:
         D.warning("processing problem", e)
-        abort(404)
+        abort(400)
 
 
 
-## CALL abort(404) IF THIS IS NOT AN ElasticSearch QUERY
+## THROW EXCEPTION IF THIS IS NOT AN ElasticSearch QUERY
 def filter(path, query):
     path=path.split("/")
 
     ## EXPECTING {index_name} "/" {type_name} "/_search"
     ## EXPECTING {index_name} "/_search"
-    if len(path) not in [2, 3] or path[-1]!="_search": abort(404)
+    if len(path) not in [2, 3]:                     D.error("Not allowed")
+    if path[-1] not in ["_mapping", "_search"]:     D.error("Not allowed")
 
-    ## EXPECTING THE QUERY TO AT LEAST LOOK LIKE A QUERY
-    if CNV.JSON2object(query).query is None: abort(404)
+    ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
+    if path[-1]=="_search" and CNV.JSON2object(query).query is None: D.error("Not allowed")
 
-    return True
+    ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
+    if path[-1]=="_mapping" and len(query)>0: D.error("Not allowed")
+
+
 
 
 # Snagged from http://stackoverflow.com/questions/10999990/python-flask-how-to-get-whole-raw-post-body
