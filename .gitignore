@@ -1,3 +1,4 @@
 .idea
-esFrontLine.iml
+*.iml
 src
+settings.json

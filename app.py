@@ -1,9 +1,14 @@
+################################################################################
+## This Source Code Form is subject to the terms of the Mozilla Public
+## License, v. 2.0. If a copy of the MPL was not distributed with this file,
+## You can obtain one at http://mozilla.org/MPL/2.0/.
+################################################################################
+## Author: Kyle Lahnakoski (kyle@lahnakoski.com)
+################################################################################
 
 from flask import Flask
 import flask
-from flask.helpers import jsonify, make_response
 import requests
-import sys
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
 from util.cnv import CNV
@@ -13,11 +18,19 @@ from util.map import Map
 
 app = Flask(__name__)
 
-
+################################################################################
+## NEED TO ADD OPTPARSE TO PICK THESE SETTING UP FROM A FILE
+## ALSO NEED DATAZILLA'S FLEXIBLE JSON
 settings=Map(**{
-    "host":"http://klahnakoski-es.corp.tor1.mozilla.com",
-    "port":9200,
+    "elasticsearch":{
+        "host":"http://klahnakoski-es.corp.tor1.mozilla.com",
+        "port":9200,
+    },
+    "proxy":{
+        "port":5000  
+    },
     "debug":"true"
+
 })
 
 
@@ -71,7 +84,7 @@ def filter(path, query):
     return True
 
 
-
+# Snagged from http://stackoverflow.com/questions/10999990/python-flask-how-to-get-whole-raw-post-body
 class WSGICopyBody(object):
     def __init__(self, application):
         self.application = application
