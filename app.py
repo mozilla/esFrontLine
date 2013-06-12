@@ -5,34 +5,23 @@
 ################################################################################
 ## Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 ################################################################################
+from string import Template
 
 from flask import Flask
 import flask
 import requests
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
+from util.startup import startup
 from util.cnv import CNV
 from util.debug import D
-from util.map import Map
 
 
 app = Flask(__name__)
 
-################################################################################
-## NEED TO ADD OPTPARSE TO PICK THESE SETTING UP FROM A FILE
-## ALSO NEED DATAZILLA'S FLEXIBLE JSON
-settings=Map(**{
-    "elasticsearch":{
-        "host":"http://klahnakoski-es.corp.tor1.mozilla.com",
-        "port":9200,
-    },
-    "proxy":{
-        "port":5000  
-    },
-    "debug":"true"
 
-})
-
+# READ SETTINGS
+settings=startup.read_settings()
 
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
@@ -45,19 +34,26 @@ def catch_all(path):
         ## SEND REQUEST
         headers = {'content-type': 'application/json'}
         r = requests.get(
-            settings.host+":"+str(settings.port)+"/"+path,
+            settings.elasticsearch.host+":"+str(settings.elasticsearch.port)+"/"+path,
             data=data,
             headers=headers,
             timeout=90
         )
 
-        ## WASSUP?!  r.headers SHOULD BE JSON, OR OBJECT, OR ITERABLE, OR SOMETHING?
-        h=str(r.headers)[20:-1].replace("\"", "\\""").replace("'", "\"")
-        h=dict([(k, v) for k, v in CNV.JSON2object(h).items()])
+        h=dict(r.headers)
         h["access-control-allow-origin"]="*"
 
-        D.println("path: ${path}", {"path":path, "request_body":data, "response_body":r.content})
+        if (settings.debug):
+            D.println("path: ${path}, request bytes=${request_content_length}, response bytes=${response_content_length}", {
+                "path":path,
+                "request_headers":dict(r.headers),
+                "request_content_length":len(data),
+                "response_headers":h,
+                "response_content_length":len(r.content)
+            })
 
+
+            Template("")
         ## FORWARD RESPONSE
         return flask.wrappers.Response(
             r.content,
@@ -115,6 +111,9 @@ class WSGICopyBody(object):
 
 app.wsgi_app = WSGICopyBody(app.wsgi_app)
 
+
+
+
 if __name__ == '__main__':
-    app.run(debug=settings.debug)
+    app.run(debug=settings.debug, port=settings.listen.port)
     app = HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
