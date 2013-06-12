@@ -114,5 +114,5 @@ app.wsgi_app = WSGICopyBody(app.wsgi_app)
 
 
 if __name__ == '__main__':
-    app.run(debug=settings.debug, port=settings.listen.port)
+    app.run(debug=(settings.debug is not None), port=settings.listen.port)
     app = HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
