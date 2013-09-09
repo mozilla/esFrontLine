@@ -27,8 +27,8 @@ WARNING="WARNING"
 NOTE="NOTE"
 
 
-logging_thread=None
-Logging_multi=None
+main_log=None
+logging_multi=None
 
 
 
@@ -52,7 +52,7 @@ class D(object):
         #NICE TO GATHER MANY MORE ITEMS FOR LOGGING (LIKE STACK TRACES AND LINE NUMBERS)
         params["log_timestamp"]=datetime.utcnow().strftime("%H:%M:%S")
 
-        logging_thread.println(template, params)
+        main_log.println(template, params)
 
 
     @staticmethod
@@ -91,28 +91,20 @@ class D(object):
     #RUN ME FIRST TO WARM UP THE LOGGING
     @classmethod
     def start(cls, settings=None):
-        if settings is None:
-            settings=struct.wrap({"log":{"stream":sys.stdout}})
-        
-        #PART 2 OF 2 SETUP OF THREADED LOGGING
-        #WE NOW CAN LOAD THE threads MODULE
-        from multithread import worker_thread
-        from threads import Queue
-        logging_thread.queue=Queue()
-        logging_thread.thread=worker_thread("log thread", logging_thread.queue, None, partial(Log_usingMulti.println, logging_multi))
-
-
         ##http://victorlin.me/2012/08/good-logging-practice-in-python/
         if settings is None: return
         if settings.log is None: return
 
-        if not isinstance(settings.log, StructList): settings.log=[settings.log]
+        globals()["logging_multi"]=Log_usingMulti()
+        globals()["main_log"]=Log_usingThread(logging_multi)
+
+        if not isinstance(settings.log, list): settings.log=[settings.log]
         for log in settings.log:
             D.add_log(Log.new_instance(log))
 
     @classmethod
     def stop(cls):
-        logging_thread.stop()
+        main_log.stop()
 
 D.info=D.println
 
@@ -245,9 +237,12 @@ class Log_usingStream():
 
 class Log_usingThread():
     def __init__(self, logger):
-        self.logger=logger  #for later
-        self.thread=None
-        self.queue=None
+        #DELAYED LOAD FOR THREADS MODULE
+        from multithread import worker_thread
+        from threads import Queue
+
+        self.queue=Queue()
+        self.thread=worker_thread("log thread", self.queue, None, partial(Log_usingMulti.println, logger))
 
     def println(self, template, params):
         try:
@@ -291,10 +286,10 @@ class Log_usingMulti():
         self.many.remove(logger)
         return self
 
+    def clear_log(self):
+        self.many=[]
 
 
-#PART 1 OF 2 FOR SETTING UP THREADED LOGGING
-#DEPENDS ON THE threads MODULE, SO WE WILL SETUP THE REST AFTER IT IS LOADED
-logging_multi=Log_usingMulti()
-#logging_multi.add_log(Log_usingStream(sys.stdout))
-logging_thread=Log_usingThread(logging_multi)
+
+if main_log is None:
+    main_log=Log_usingStream(sys.stdout)

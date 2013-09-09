@@ -3,3 +3,4 @@
 *.pyc
 src
 settings.json
+resources/logs

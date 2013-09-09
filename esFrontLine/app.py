@@ -5,8 +5,6 @@
 ################################################################################
 ## Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 ################################################################################
-from string import Template
-from test.test_zlib import zlib
 
 from flask import Flask
 import flask
@@ -21,8 +19,13 @@ from util.debug import D
 app = Flask(__name__)
 
 
-# READ SETTINGS
-settings=startup.read_settings()
+
+def stream(raw_response):
+    while True:
+        block = raw_response.read(amt=65536, decode_content=False)
+        if len(block)==0:
+            return
+        yield block
 
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
@@ -42,39 +45,23 @@ def catch_all(path):
             timeout=90
         )
 
-        stream = response.raw.stream(decode_content=False)
 
         # ALLOW CROSS DOMAIN (BECAUSE ES IS USUALLY NOT ON SAME SERVER AS PAGE)
         outbound_header=dict(response.headers)
         outbound_header["access-control-allow-origin"]="*"
 
-        # RE-ZIP RESPONSE CONTENT (DOES NOT WORK)
-#        content=response.content
-##        if len(content)>1000:
-##            h["content-encoding"]="gzip"
-##            content=zlib.compress(content)
-##        else:
-##            h["content-encoding"]="text"
-#        outbound_header["content-encoding"]="text"
-#
-#        outbound_header["content-length"]=str(len(content))
-
-
-        D.println("path: {{path}}, request bytes=\{\{$1\}\}}, response bytes=\{\{$1\}\}} ({{response_content}}...)", {
+        D.println("path: {{path}}, request bytes={{request_content_length}}, response bytes={{response_content_length}}", {
             "path":path,
             "request_headers":dict(response.headers),
             "request_content_length":len(data),
             "response_headers":outbound_header,
-            "response_content_length":outbound_header["content-length"],
-            "response_content":response.content[0:100]
+            "response_content_length":outbound_header["content-length"]
         })
 
 
         ## FORWARD RESPONSE
         return flask.wrappers.Response(
-            response=stream,
-#            response=content,   #content MUST BE A GENERATOR FOR STREAMING
-            #response=response.iter_content(), #GENERATOR FOR STREAMING
+            stream(response.raw),
             direct_passthrough=True, #FOR STREAMING
             status=response.status_code,
             headers=outbound_header
@@ -84,26 +71,28 @@ def catch_all(path):
         abort(400)
 
 
-
 ## THROW EXCEPTION IF THIS IS NOT AN ElasticSearch QUERY
-def filter(path, query):
-    path=path.split("/")
+def filter(path_string, query):
+    try:
+        path=path_string.split("/")
 
-    ## EXPECTING {index_name} "/" {type_name} "/_search"
-    ## EXPECTING {index_name} "/_search"
-    if len(path) not in [2, 3]:
-        D.error("Not allowed")
-    if path[-1] not in ["_mapping", "_search"]:
-        D.error("Not allowed")
+        ## EXPECTING {index_name} "/" {type_name} "/_search"
+        ## EXPECTING {index_name} "/_search"
+        if len(path) not in [2, 3]:
+            D.error("request must be of form:  {index_name} \"/\" {type_name} \"/_search\" ")
+        if path[-1] not in ["_mapping", "_search"]:
+            D.error("request path must end with _mapping or _search")
 
-    ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
-    if path[-1]=="_search" and CNV.JSON2object(query).query is None:
-        D.error("Not allowed")
+        ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
+        if path[-1]=="_search" and CNV.JSON2object(query).query is None:
+            D.error("_search must have query")
 
-    ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
-    if path[-1]=="_mapping" and len(query)>0:
-        D.error("Not allowed")
+        ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
+        if path[-1]=="_mapping" and len(query)>0:
+            D.error("Can not provide content when requesting _mapping")
 
+    except Exception, e:
+        D.error("Not allowed: {{path}}:\n{{query}}", {"path":path_string, "query":query}, e)
 
 
 
@@ -138,13 +127,11 @@ class WSGICopyBody(object):
 
 app.wsgi_app = WSGICopyBody(app.wsgi_app)
 
-
-
-
 if __name__ == '__main__':
-    app.run(
-        debug=(settings.debug is not None),
-        host='0.0.0.0',
-        port=settings.listen.port
-    )
-    app = HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
+
+    try:
+        settings=startup.read_settings()
+        app.run(**settings.flask)
+        app = HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
+    finally:
+        D.println("Execution complete")
