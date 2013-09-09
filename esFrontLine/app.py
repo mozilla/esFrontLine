@@ -34,44 +34,50 @@ def catch_all(path):
 
         ## SEND REQUEST
         headers = {'content-type': 'application/json'}
-        r = requests.get(
+        response = requests.get(
             settings.elasticsearch.host+":"+str(settings.elasticsearch.port)+"/"+path,
             data=data,
+            stream=True, #FOR STREAMING
             headers=headers,
             timeout=90
         )
 
+        stream = response.raw.stream(decode_content=False)
+
         # ALLOW CROSS DOMAIN (BECAUSE ES IS USUALLY NOT ON SAME SERVER AS PAGE)
-        h=dict(r.headers)
-        h["access-control-allow-origin"]="*"
+        outbound_header=dict(response.headers)
+        outbound_header["access-control-allow-origin"]="*"
 
         # RE-ZIP RESPONSE CONTENT (DOES NOT WORK)
-        content=r.content
-#        if len(content)>1000:
-#            h["content-encoding"]="gzip"
-#            content=zlib.compress(content)
-#        else:
-#            h["content-encoding"]="text"
-        h["content-encoding"]="text"
+#        content=response.content
+##        if len(content)>1000:
+##            h["content-encoding"]="gzip"
+##            content=zlib.compress(content)
+##        else:
+##            h["content-encoding"]="text"
+#        outbound_header["content-encoding"]="text"
+#
+#        outbound_header["content-length"]=str(len(content))
 
-        h["content-length"]=str(len(content))
 
-
-        D.println("path: ${path}, request bytes=${request_content_length}, response bytes=${response_content_length} (${response_content}...)", {
+        D.println("path: {{path}}, request bytes=\{\{$1\}\}}, response bytes=\{\{$1\}\}} ({{response_content}}...)", {
             "path":path,
-            "request_headers":dict(r.headers),
+            "request_headers":dict(response.headers),
             "request_content_length":len(data),
-            "response_headers":h,
-            "response_content_length":h["content-length"],
-            "response_content":r.content[0:100]
+            "response_headers":outbound_header,
+            "response_content_length":outbound_header["content-length"],
+            "response_content":response.content[0:100]
         })
 
 
         ## FORWARD RESPONSE
         return flask.wrappers.Response(
-            response=content,
-            status=r.status_code,
-            headers=h
+            response=stream,
+#            response=content,   #content MUST BE A GENERATOR FOR STREAMING
+            #response=response.iter_content(), #GENERATOR FOR STREAMING
+            direct_passthrough=True, #FOR STREAMING
+            status=response.status_code,
+            headers=outbound_header
         )
     except Exception, e:
         D.warning("processing problem", e)
@@ -85,14 +91,18 @@ def filter(path, query):
 
     ## EXPECTING {index_name} "/" {type_name} "/_search"
     ## EXPECTING {index_name} "/_search"
-    if len(path) not in [2, 3]:                     D.error("Not allowed")
-    if path[-1] not in ["_mapping", "_search"]:     D.error("Not allowed")
+    if len(path) not in [2, 3]:
+        D.error("Not allowed")
+    if path[-1] not in ["_mapping", "_search"]:
+        D.error("Not allowed")
 
     ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
-    if path[-1]=="_search" and CNV.JSON2object(query).query is None: D.error("Not allowed")
+    if path[-1]=="_search" and CNV.JSON2object(query).query is None:
+        D.error("Not allowed")
 
     ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
-    if path[-1]=="_mapping" and len(query)>0: D.error("Not allowed")
+    if path[-1]=="_mapping" and len(query)>0:
+        D.error("Not allowed")
 
 
 
