@@ -1,3 +1,5 @@
+# encoding: utf-8
+#
 import random
 import string
 
@@ -6,7 +8,7 @@ SIMPLE_ALPHABET=string.ascii_letters + string.digits
 SEED=random.Random()
 
 
-class Random():
+class Random(object):
 
     @staticmethod
     def string(length, alphabet=SIMPLE_ALPHABET):
@@ -22,3 +24,8 @@ class Random():
     @staticmethod
     def int(*args):
         return random.randrange(*args)
+
+    @staticmethod
+    def sample(data, count):
+        num = len(data)
+        return [data[Random.int(num)] for i in range(count)]

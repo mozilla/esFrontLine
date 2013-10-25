@@ -1,19 +1,23 @@
-################################################################################
-## This Source Code Form is subject to the terms of the Mozilla Public
-## License, v. 2.0. If a copy of the MPL was not distributed with this file,
-## You can obtain one at http://mozilla.org/MPL/2.0/.
-################################################################################
-## Author: Kyle Lahnakoski (kyle@lahnakoski.com)
-################################################################################
+# encoding: utf-8
+#
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Author: Kyle Lahnakoski (kyle@lahnakoski.com)
+#
 import math
-from .debug import D
+from . import struct
+from .struct import Null, nvl
+from .logs import Log
 from .strings import find_first
 
-class Math():
+class Math(object):
 
     @staticmethod
     def bayesian_add(a, b):
-        if a>=1 or b>=1 or a<=0 or b<=0: D.error("Only allowed values *between* zero and one")
+        if a>=1 or b>=1 or a<=0 or b<=0: Log.error("Only allowed values *between* zero and one")
         return a*b/(a*b+(1-a)*(1-b))
 
 
@@ -48,14 +52,24 @@ class Math():
 
     @staticmethod
     def round_sci(value, decimal=None, digits=None):
-
-        if digits is not None:
+        if digits != None:
             m=pow(10, math.floor(math.log10(digits)))
             return round(value/m, digits)*m
 
         return round(value, decimal)
 
-    #RETURN A VALUE CLOSE TO value, BUT WITH SHORTER len(str(value))<len(str(value)):
+
+    @staticmethod
+    def floor(value, mod=None):
+        """
+        x == floor(x, a) + mod(x, a)  FOR ALL a
+        """
+        mod = nvl(mod, 1)
+        v = int(math.floor(value))
+        return v - (v % mod)
+
+
+    #RETURN A VALUE CLOSE TO value, BUT WITH SHORTER len(unicode(value))<len(unicode(value)):
     @staticmethod
     def approx_str(value):
         v=unicode(value)
@@ -69,12 +83,33 @@ class Math():
 
 
     @staticmethod
-    def min(*values):
-        output=None
+    def min(values):
+        output = Null
         for v in values:
-            if v is None: continue
-            if output is None:
-                output=v
+            if v == None:
                 continue
-            output=min(output, v)
+            if math.isnan(v):
+                continue
+            if output == None:
+                output = v
+                continue
+            output = min(output, v)
         return output
+
+
+
+    @staticmethod
+    def max(values):
+        output = Null
+        for v in values:
+            if v == None:
+                continue
+            if math.isnan(v):
+                continue
+            if output == None:
+                output = v
+                continue
+            output = max(output, v)
+        return output
+
+

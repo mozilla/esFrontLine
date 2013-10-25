@@ -1,15 +1,17 @@
-################################################################################
-## This Source Code Form is subject to the terms of the Mozilla Public
-## License, v. 2.0. If a copy of the MPL was not distributed with this file,
-## You can obtain one at http://mozilla.org/MPL/2.0/.
-################################################################################
-## Author: Kyle Lahnakoski (kyle@lahnakoski.com)
-################################################################################
+# encoding: utf-8
+#
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Author: Kyle Lahnakoski (kyle@lahnakoski.com)
+#
 
 from math import sqrt
-from .basic import nvl
-from .debug import D
-from .struct import Struct
+from .struct import nvl
+from .logs import Log
+
 
 DEBUG=True
 EPSILON=0.000001
@@ -31,10 +33,10 @@ def stats2z_moment(stats):
     m=Z_moment(stats.count, mz1, mz2, mz3, mz4)
     if DEBUG:
         v = z_moment2stats(m, unbiased=False)
-        if not closeEnough(v.count, stats.count): D.error("convertion error")
-        if not closeEnough(v.mean, stats.mean): D.error("convertion error")
+        if not closeEnough(v.count, stats.count): Log.error("convertion error")
+        if not closeEnough(v.mean, stats.mean): Log.error("convertion error")
         if not closeEnough(v.variance, stats.variance):
-            D.error("convertion error")
+            Log.error("convertion error")
 
     return m
 
@@ -52,14 +54,14 @@ def z_moment2stats(z_moment, unbiased=True):
 
     return Stats(
         count=N,
-        mean=z_moment.S[1]/N,
-        variance=(z_moment.S[2]-(z_moment.S[1]**2)/N)/(N-free),
+        mean=z_moment.S[1] / N if N > 0 else float('nan'),
+        variance=(z_moment.S[2] - (z_moment.S[1] ** 2) / N) / (N - free) if N - free > 0 else float('nan'),
         unbiased=unbiased
     )
 
 
 
-class Stats():
+class Stats(object):
 
     def __init__(self, **args):
         if "count" not in args:
@@ -113,10 +115,11 @@ class Stats():
 
 
 
-################################################################################
-## ZERO-CENTERED MOMENTS
-################################################################################
-class Z_moment():
+
+class Z_moment(object):
+    """
+    ZERO-CENTERED MOMENTS
+    """
     def __init__(self, *args):
         self.S=tuple(args)
 
@@ -134,21 +137,21 @@ class Z_moment():
     @property
     def dict(self):
     #RETURN HASH OF SUMS
-        return dict([("s"+unicode(i), m) for i, m in enumerate(self.S)])
+        return {"s"+unicode(i): m for i, m in enumerate(self.S)}
 
 
     @staticmethod
-    def new_instance(values):
-        if values is None: return Z_moment()
-        values=[float(v) for v in values]
+    def new_instance(values=None):
+        if values == None: return Z_moment()
+        values=[float(v) for v in values if v != None]
 
-        return Z_moment(*[
+        return Z_moment(
             len(values),
             sum([n for n in values]),
             sum([pow(n, 2) for n in values]),
             sum([pow(n, 3) for n in values]),
             sum([pow(n, 4) for n in values])
-        ])
+        )
 
 
 

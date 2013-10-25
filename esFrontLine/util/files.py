@@ -1,76 +1,120 @@
-################################################################################
-## This Source Code Form is subject to the terms of the Mozilla Public
-## License, v. 2.0. If a copy of the MPL was not distributed with this file,
-## You can obtain one at http://mozilla.org/MPL/2.0/.
-################################################################################
-## Author: Kyle Lahnakoski (kyle@lahnakoski.com)
-################################################################################
+# encoding: utf-8
+#
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Author: Kyle Lahnakoski (kyle@lahnakoski.com)
+#
 
 
 
 import codecs
+from datetime import datetime
 import os
 import shutil
+from .struct import listwrap, nvl
+from .cnv import CNV
 
 
-class File():
+class File(object):
 
     def __init__(self, filename):
-        self.filename=filename
+        if filename == None:
+            from .logs import Log
+            Log.error("File must be given a filename")
+        #USE UNIX STANDARD
+        self._filename = "/".join(filename.split(os.sep))
+
+
+    @property
+    def filename(self):
+        return self._filename.replace("/", os.sep)
+
+    @property
+    def abspath(self):
+        return os.path.abspath(self._filename)
+
+    def backup_name(self, timestamp=None):
+        """
+        RETURN A FILENAME THAT CAN SERVE AS A BACKUP FOR THIS FILE
+        """
+        suffix = CNV.datetime2string(nvl(timestamp, datetime.now()), "%Y%m%d_%H%M%S")
+        parts = self._filename.split(".")
+        if len(parts) == 1:
+            output = self._filename + "." + suffix
+        elif len(parts) > 1 and parts[-2][-1] == "/":
+            output = self._filename + "." + suffix
+        else:
+            parts.insert(-1, suffix)
+            output = ".".join(parts)
+        return output
 
 
     def read(self, encoding="utf-8"):
-        with codecs.open(self.filename, "r", encoding=encoding) as file:
+        with codecs.open(self._filename, "r", encoding=encoding) as file:
             return file.read()
 
     def read_ascii(self):
         if not self.parent.exists: self.parent.create()
-        with open(self.filename, "r") as file:
+        with open(self._filename, "r") as file:
             return file.read()
 
     def write_ascii(self, content):
         if not self.parent.exists: self.parent.create()
-        with open(self.filename, "w") as file:
+        with open(self._filename, "w") as file:
             file.write(content)
 
     def write(self, data):
         if not self.parent.exists: self.parent.create()
-        with open(self.filename, "w") as file:
-            if not isinstance(data, list): data=[data]
-            for d in data:
+        with open(self._filename, "w") as file:
+            for d in listwrap(data):
                 file.write(d)
 
     def iter(self):
-        return codecs.open(self.filename, "r")
+        return codecs.open(self._filename, "r")
 
     def append(self, content):
         if not self.parent.exists: self.parent.create()
-        with open(self.filename, "a") as output_file:
+        with open(self._filename, "a") as output_file:
             output_file.write(content)
 
     def delete(self):
         try:
-            shutil.rmtree(self.filename)
+            if os.path.isdir(self._filename):
+                shutil.rmtree(self._filename)
+            elif os.path.isfile(self._filename):
+                os.remove(self._filename)
             return self
         except Exception, e:
             if e.strerror=="The system cannot find the path specified":
                 return
-            from .debug import D
-            D.warning("Could not remove file", e)
+            from .logs import Log
+            Log.error("Could not remove file", e)
+
+    def backup(self):
+        names=self._filename.split("/")[-1].split(".")
+        if len(names)==1:
+            backup=File(self._filename+".backup "+datetime.utcnow().strftime("%Y%m%d %H%i%s"))
+
 
     def create(self):
         try:
-            os.makedirs(self.filename)
+            os.makedirs(self._filename)
         except Exception, e:
-            from .debug import D
-            D.error("Could not make directory {{dir_name}}", {"dir_name":self.filename}, e)
+            from .logs import Log
+            Log.error("Could not make directory {{dir_name}}", {"dir_name":self._filename}, e)
 
 
     @property
     def parent(self):
-        return File("/".join(self.filename.split("/")[:-1]))
+        return File("/".join(self._filename.split("/")[:-1]))
 
     @property
     def exists(self):
-        if self.filename in ["", "."]: return True
-        return os.path.exists(self.filename)
+        if self._filename in ["", "."]: return True
+        try:
+            return os.path.exists(self._filename)
+        except Exception, e:
+            return False
