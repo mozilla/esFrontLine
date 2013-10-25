@@ -1,10 +1,12 @@
-################################################################################
-## This Source Code Form is subject to the terms of the Mozilla Public
-## License, v. 2.0. If a copy of the MPL was not distributed with this file,
-## You can obtain one at http://mozilla.org/MPL/2.0/.
-################################################################################
-## Author: Kyle Lahnakoski (kyle@lahnakoski.com)
-################################################################################
+# encoding: utf-8
+#
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+# Author: Kyle Lahnakoski (kyle@lahnakoski.com)
+#
 
 from flask import Flask
 import flask
@@ -13,7 +15,6 @@ from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
 from esFrontLine.util import struct
 from esFrontLine.util.randoms import Random
-from esFrontLine.util.struct import Struct
 from esFrontLine.util import startup
 from esFrontLine.util.cnv import CNV
 from esFrontLine.util.logs import Log

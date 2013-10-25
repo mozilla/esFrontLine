@@ -33,9 +33,7 @@ You must right your own setting.jason file with the following properties set:
 
   * **elasticsearch.port** - port for ES (default = 9200)
 
-  * **listen.port** - The port that this application will listen on (default 5000)
-
-  * **flask** - flask.run() parameters
+  * **flask** - flask.run() parameters (default port = 5000)
 
   * **debug** - turn on debugging
 
