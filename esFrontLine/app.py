@@ -13,9 +13,10 @@ from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
 from esFrontLine.util import struct
 from esFrontLine.util.randoms import Random
-from util import startup
-from util.cnv import CNV
-from util.logs import Log
+from esFrontLine.util.struct import Struct
+from esFrontLine.util import startup
+from esFrontLine.util.cnv import CNV
+from esFrontLine.util.logs import Log
 
 
 app = Flask(__name__)
@@ -128,7 +129,7 @@ class WSGICopyBody(object):
         return callback
 
 
-# app.wsgi_app = WSGICopyBody(app.wsgi_app)
+app.wsgi_app = WSGICopyBody(app.wsgi_app)
 
 if __name__ == '__main__':
 

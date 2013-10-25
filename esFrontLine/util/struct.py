@@ -27,9 +27,9 @@ class Struct(dict):
     """
 
     
-    def __init__(self, **map):
+    def __init__(self, **kwargs):
         dict.__init__(self)
-        object.__setattr__(self, "__dict__", map)  #map IS A COPY OF THE PARAMETERS
+        object.__setattr__(self, "__dict__", kwargs)  #map IS A COPY OF THE PARAMETERS
 
     def __bool__(self):
         return True

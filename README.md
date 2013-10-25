@@ -27,28 +27,40 @@ Setup
 
 You must right your own setting.jason file with the following properties set:
 
+  * **elasticsearch** - (Array of) ElasticSearch host pointers
+
   * **elasticsearch.host** - URL of the ElasticSearch cluster that will accept query requests
 
   * **elasticsearch.port** - port for ES (default = 9200)
 
   * **listen.port** - The port that this application will listen on (default 5000)
 
+  * **flask** - flask.run() parameters
+
   * **debug** - turn on debugging
-  
+
 Here is an example of my ```settings.json``` file
 
     {
-        "elasticsearch":{
+        "elasticsearch":[{
+            "host":"http://elasticsearch4.metrics.scl3.mozilla.com",
+            "port":9200
+        },{
+            "host":"http://elasticsearch5.metrics.scl3.mozilla.com",
+            "port":9200
+        },{
+            "host":"http://elasticsearch7.metrics.scl3.mozilla.com",
+            "port":9200
+        },{
             "host":"http://elasticsearch8.metrics.scl3.mozilla.com",
             "port":9200
-        },
+        }],
         "flask":{
             "host":"0.0.0.0",
             "port":9292,
             "debug":false,
             "threaded":true,
             "processes":1
-    
         },
         "debug":{
             "log":[{
@@ -58,13 +70,12 @@ Here is an example of my ```settings.json``` file
                 "backupCount": 200,
                 "encoding": "utf8"
             },{
-                "class":"esFrontLine.util.debug.Log_usingStream",
+                "class":"esFrontLine.util.logs.Log_usingStream",
                 "stream":"sys.stdout"
             }]
         }
-    
-    }
 
+    }
 Execution
 ---------
 

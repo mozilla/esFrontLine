@@ -16,9 +16,9 @@ import time
 from .multiset import Multiset
 from .jsons import json_decoder, json_encoder
 from .logs import Log
-import struct
+from . import struct
 from .strings import expand_template
-from .struct import StructList, Null
+from .struct import StructList
 
 
 
