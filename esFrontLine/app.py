@@ -10,6 +10,7 @@
 import argparse
 import codecs
 import logging
+from logging.handlers import RotatingFileHandler
 import os
 import random
 from flask import Flask, json
@@ -28,6 +29,7 @@ def stream(raw_response):
             return
         yield block
 
+
 def random_sample(data, count):
     num = len(data)
     return [data[random.randrange(num)] for i in range(count)]
@@ -40,7 +42,6 @@ def listwrap(value):
         return value
     else:
         return [value]
-
 
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
@@ -56,7 +57,7 @@ def catch_all(path):
         ## SEND REQUEST
         headers = {'content-type': 'application/json'}
         response = requests.get(
-            es.host + ":" + str(es.port) + "/" + path,
+            es["host"] + ":" + str(es["port"]) + "/" + path,
             data=data,
             stream=True, #FOR STREAMING
             headers=headers,
@@ -66,12 +67,12 @@ def catch_all(path):
         # ALLOW CROSS DOMAIN (BECAUSE ES IS USUALLY NOT ON SAME SERVER AS PAGE)
         outbound_header = dict(response.headers)
         outbound_header["access-control-allow-origin"] = "*"
-        logger.note("path: {path}, request bytes={request_content_length}, response bytes={response_content_length}".format(
+        logger.debug("path: {path}, request bytes={request_content_length}, response bytes={response_content_length}".format(
             path=path,
-            request_headers= dict(response.headers),
-            request_content_length= len(data),
-            response_headers= outbound_header,
-            response_content_length= outbound_header["content-length"]
+            # request_headers=dict(response.headers),
+            request_content_length=len(data),
+            # response_headers=outbound_header,
+            response_content_length=outbound_header["content-length"]
         ))
 
         ## FORWARD RESPONSE
@@ -82,7 +83,8 @@ def catch_all(path):
             headers=outbound_header
         )
     except Exception, e:
-        logger.warning("processing problem", e)
+        logger.warning("processing problem")
+        logger.exception(e.message)
         abort(400)
 
 
@@ -105,7 +107,7 @@ def filter(path_string, query):
             logger.error('request must be of form: {index_name} "/" {type_name} "/_search" ')
 
         ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
-        if path[-1] == "_search" and json._default_decoder.decode(query).get("query", None) is None:
+        if path[-1] == "_search" and json.loads(query).get("query", None) is None:
             logger.error("_search must have query")
 
         ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
@@ -148,6 +150,8 @@ class WSGICopyBody(object):
 
 app.wsgi_app = WSGICopyBody(app.wsgi_app)
 
+logger = None
+
 if __name__ == '__main__':
 
     try:
@@ -159,35 +163,34 @@ if __name__ == '__main__':
             "default": "./settings.json",
             "required": False
         })
-        namespace=parser.parse_args()
+        namespace = parser.parse_args()
         args = {k: getattr(namespace, k) for k in vars(namespace)}
 
         if not os.path.exists(args["filename"]):
             print("Can not file settings file {filename}".format(filename=args["filename"]))
         else:
             with codecs.open(args["filename"], "r", encoding="utf-8") as file:
-                json = file.read()
-            settings = json._default_decoder.decode(json)
+                json_data = file.read()
+            settings = json.loads(json_data)
             settings["args"] = args
 
             logger = logging.getLogger('esFrontLine')
             logger.setLevel(logging.DEBUG)
             formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-            for d in listwrap(settings["debug"]):
-                if d["filename"]:
-                    fh = logging.FileHandler('spam.log')
+            for d in listwrap(settings["debug"]["log"]):
+                if d.get("filename", None):
+                    fh = RotatingFileHandler(**d)
                     fh.setLevel(logging.DEBUG)
                     fh.setFormatter(formatter)
                     logger.addHandler(fh)
-                elif d["stream"]=="sys.stdout":
+                elif d.get("stream", None) == "sys.stdout":
                     ch = logging.StreamHandler()
                     ch.setLevel(logging.DEBUG)
                     ch.setFormatter(formatter)
                     logger.addHandler(ch)
 
+            HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
             app.run(**settings["flask"])
-            app = HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
     except Exception, e:
-        if logger:
-            logger.exception("Startup problem")
+        print(e.message)
