@@ -7,18 +7,16 @@
 #
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-from flask import Flask
+import argparse
+import codecs
+import os
+import random
+from flask import Flask, json
 import flask
 import requests
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
-from esFrontLine.util import struct
-from esFrontLine.util.randoms import Random
-from esFrontLine.util import startup
-from esFrontLine.util.cnv import CNV
 from esFrontLine.util.logs import Log
-
 
 app = Flask(__name__)
 
@@ -30,6 +28,20 @@ def stream(raw_response):
             return
         yield block
 
+def random_sample(data, count):
+    num = len(data)
+    return [data[random.randrange(num)] for i in range(count)]
+
+
+def listwrap(value):
+    if value == None:
+        return []
+    elif isinstance(value, list):
+        return value
+    else:
+        return [value]
+
+
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
 @app.route('/<path:path>', methods=['GET', 'POST'])
@@ -39,7 +51,7 @@ def catch_all(path):
         filter(path, data)
 
         #PICK RANDOM ES
-        es = Random.sample(struct.listwrap(settings.elasticsearch), 1)[0]
+        es = random_sample(listwrap(settings["elasticsearch"]), 1)[0]
 
         ## SEND REQUEST
         headers = {'content-type': 'application/json'}
@@ -74,6 +86,7 @@ def catch_all(path):
         Log.warning("processing problem", e)
         abort(400)
 
+
 def filter(path_string, query):
     """
     THROW EXCEPTION IF THIS IS NOT AN ElasticSearch QUERY
@@ -81,15 +94,19 @@ def filter(path_string, query):
     try:
         path = path_string.split("/")
 
+        ## EXPECTING {index_name} "/" {type_name} "/" {_id}
         ## EXPECTING {index_name} "/" {type_name} "/_search"
         ## EXPECTING {index_name} "/_search"
-        if len(path) not in [2, 3]:
-            Log.error("request must be of form:  {index_name} \"/\" {type_name} \"/_search\" ")
-        if path[-1] not in ["_mapping", "_search"]:
-            Log.error("request path must end with _mapping or _search")
+        if len(path) == 2:
+            if path[-1] not in ["_mapping", "_search"]:
+                Log.error("request path must end with _mapping or _search")
+        elif len(path) == 3:
+            pass  #OK
+        else:
+            Log.error('request must be of form: {index_name} "/" {type_name} "/_search" ')
 
         ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
-        if path[-1] == "_search" and CNV.JSON2object(query).query is None:
+        if path[-1] == "_search" and json._default_decoder.decode(query).get("query", None) is None:
             Log.error("_search must have query")
 
         ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
@@ -135,10 +152,32 @@ app.wsgi_app = WSGICopyBody(app.wsgi_app)
 if __name__ == '__main__':
 
     try:
-        settings = startup.read_settings()
-        Log.start(settings.debug)
-        app.run(**settings.flask.dict)
+        parser = argparse.ArgumentParser()
+        parser.add_argument(*["--settings", "--settings-file", "--settings_file"], **{
+            "help": "path to JSON file with settings",
+            "type": str,
+            "dest": "filename",
+            "default": "./settings.json",
+            "required": False
+        })
+        namespace=parser.parse_args()
+        args = {k: getattr(namespace, k) for k in vars(namespace)}
+
+        if not os.path.exists(args["filename"]):
+            Log.error("Can not file settings file {{filename}}", {
+               "filename": args["filename"]
+            })
+
+        with codecs.open(args["filename"], "r", encoding="utf-8") as file:
+            json = file.read()
+        settings = json._default_decoder.decode(json)
+        settings["args"] = args
+
+        Log.start(settings["debug"])
+        app.run(**settings["flask"])
         app = HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
+    except Exception, e:
+        Log.error("Startup problem", e)
     finally:
         Log.println("Execution complete")
         Log.stop()
