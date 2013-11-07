@@ -100,23 +100,23 @@ def filter(path_string, query):
         ## EXPECTING {index_name} "/_search"
         if len(path) == 2:
             if path[-1] not in ["_mapping", "_search"]:
-                logger.error("request path must end with _mapping or _search")
+                raise Exception("request path must end with _mapping or _search")
         elif len(path) == 3:
             pass  #OK
         else:
-            logger.error('request must be of form: {index_name} "/" {type_name} "/_search" ')
+            raise Exception('request must be of form: {index_name} "/" {type_name} "/_search" ')
 
         ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
         if path[-1] == "_search" and json.loads(query).get("query", None) is None:
-            logger.error("_search must have query")
+            raise Exception("_search must have query")
 
         ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
         if path[-1] == "_mapping" and len(query) > 0:
-            logger.error("Can not provide content when requesting _mapping")
+            raise Exception("Can not provide content when requesting _mapping")
 
     except Exception, e:
         logger.exception(e.message)
-        logger.error("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
+        raise Exception("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
 
 
 # Snagged from http://stackoverflow.com/questions/10999990/python-flask-how-to-get-whole-raw-post-body
@@ -168,30 +168,30 @@ if __name__ == '__main__':
         args = {k: getattr(namespace, k) for k in vars(namespace)}
 
         if not os.path.exists(args["filename"]):
-            print("Can not file settings file {filename}".format(filename=args["filename"]))
-        else:
-            with codecs.open(args["filename"], "r", encoding="utf-8") as file:
-                json_data = file.read()
-            settings = json.loads(json_data)
-            settings["args"] = args
+            raise Exception("Can not file settings file {filename}".format(filename=args["filename"]))
 
-            logger = logging.getLogger('esFrontLine')
-            logger.setLevel(logging.DEBUG)
-            formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        with codecs.open(args["filename"], "r", encoding="utf-8") as file:
+            json_data = file.read()
+        settings = json.loads(json_data)
+        settings["args"] = args
 
-            for d in listwrap(settings["debug"]["log"]):
-                if d.get("filename", None):
-                    fh = RotatingFileHandler(**d)
-                    fh.setLevel(logging.DEBUG)
-                    fh.setFormatter(formatter)
-                    logger.addHandler(fh)
-                elif d.get("stream", None) == "sys.stdout":
-                    ch = logging.StreamHandler()
-                    ch.setLevel(logging.DEBUG)
-                    ch.setFormatter(formatter)
-                    logger.addHandler(ch)
+        logger = logging.getLogger('esFrontLine')
+        logger.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-            HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
-            app.run(**settings["flask"])
+        for d in listwrap(settings["debug"]["log"]):
+            if d.get("filename", None):
+                fh = RotatingFileHandler(**d)
+                fh.setLevel(logging.DEBUG)
+                fh.setFormatter(formatter)
+                logger.addHandler(fh)
+            elif d.get("stream", None) == "sys.stdout":
+                ch = logging.StreamHandler()
+                ch.setLevel(logging.DEBUG)
+                ch.setFormatter(formatter)
+                logger.addHandler(ch)
+
+        HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
+        app.run(**settings["flask"])
     except Exception, e:
         print(e.message)
