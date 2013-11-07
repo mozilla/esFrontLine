@@ -25,7 +25,7 @@ app = Flask(__name__)
 def stream(raw_response):
     while True:
         block = raw_response.read(amt=65536, decode_content=False)
-        if len(block) == 0:
+        if not block:
             return
         yield block
 
@@ -115,7 +115,8 @@ def filter(path_string, query):
             logger.error("Can not provide content when requesting _mapping")
 
     except Exception, e:
-        logger.exception("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
+        logger.exception(e.message)
+        logger.error("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
 
 
 # Snagged from http://stackoverflow.com/questions/10999990/python-flask-how-to-get-whole-raw-post-body
