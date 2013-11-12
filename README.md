@@ -16,20 +16,16 @@ Install
 
 I will assume you have Python installed (if not, here are [Windows7 instructions](https://github.com/klahnakoski/pyLibrary#windows-7-install-instructions-))
 
-    git clone https://github.com/klahnakoski/esFrontLine.git
-
-    cd esFrontLine
-
-	pip install -r requirements.txt
+    pip install esFrontLine
 
 Setup
 -----
 
-You must right your own setting.jason file with the following properties set:
+You must write your own setting.json file with the following properties set:
 
-  * **elasticsearch** - (Array of) ElasticSearch host pointers
+  * **elasticsearch** - (Array of) ElasticSearch nodes
 
-  * **elasticsearch.host** - URL of the ElasticSearch cluster that will accept query requests
+  * **elasticsearch.host** - URL of the ElasticSearch node that will accept query requests
 
   * **elasticsearch.port** - port for ES (default = 9200)
 
