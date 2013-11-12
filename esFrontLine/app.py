@@ -30,13 +30,8 @@ def stream(raw_response):
         yield block
 
 
-def random_sample(data, count):
-    num = len(data)
-    return [data[random.randrange(num)] for i in range(count)]
-
-
 def listwrap(value):
-    if value == None:
+    if value is None:
         return []
     elif isinstance(value, list):
         return value
@@ -52,7 +47,7 @@ def catch_all(path):
         filter(path, data)
 
         #PICK RANDOM ES
-        es = random_sample(listwrap(settings["elasticsearch"]), 1)[0]
+        es = random.choice(listwrap(settings["elasticsearch"]))
 
         ## SEND REQUEST
         headers = {'content-type': 'application/json'}
@@ -185,8 +180,8 @@ if __name__ == '__main__':
                 fh.setLevel(logging.DEBUG)
                 fh.setFormatter(formatter)
                 logger.addHandler(fh)
-            elif d.get("stream", None) == "sys.stdout":
-                ch = logging.StreamHandler()
+            elif d.get("stream", None) in ("sys.stdout", "sys.stderr"):
+                ch = logging.StreamHandler(stream=eval(d["stream"]))
                 ch.setLevel(logging.DEBUG)
                 ch.setFormatter(formatter)
                 logger.addHandler(ch)

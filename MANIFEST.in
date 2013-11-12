@@ -15,6 +15,3 @@ exclude .git*
 recursive-exclude . *.pyc
 include README.txt
 exclude MANIFEST.in
-
-
-
