@@ -5,4 +5,8 @@ src
 settings.json
 resources/logs
 esFrontLine/util/.svn
-results/*
+build
+dist
+*.egg-info
+projectFilesBackup
+results

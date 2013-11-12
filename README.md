@@ -62,13 +62,11 @@ Here is an example of my ```settings.json``` file
         },
         "debug":{
             "log":[{
-                "class": "logging.handlers.RotatingFileHandler",
                 "filename": "./results/logs/app.log",
                 "maxBytes": 10000000,
                 "backupCount": 200,
                 "encoding": "utf8"
             },{
-                "class":"esFrontLine.util.logs.Log_usingStream",
                 "stream":"sys.stdout"
             }]
         }
