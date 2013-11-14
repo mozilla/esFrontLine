@@ -7,18 +7,17 @@
 #
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-
-from flask import Flask
+import argparse
+import codecs
+import logging
+from logging.handlers import RotatingFileHandler
+import os
+import random
+from flask import Flask, json
 import flask
 import requests
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
-from esFrontLine.util import struct
-from esFrontLine.util.randoms import Random
-from esFrontLine.util import startup
-from esFrontLine.util.cnv import CNV
-from esFrontLine.util.logs import Log
-
 
 app = Flask(__name__)
 
@@ -26,9 +25,18 @@ app = Flask(__name__)
 def stream(raw_response):
     while True:
         block = raw_response.read(amt=65536, decode_content=False)
-        if len(block) == 0:
+        if not block:
             return
         yield block
+
+
+def listwrap(value):
+    if value is None:
+        return []
+    elif isinstance(value, list):
+        return value
+    else:
+        return [value]
 
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
@@ -39,12 +47,12 @@ def catch_all(path):
         filter(path, data)
 
         #PICK RANDOM ES
-        es = Random.sample(struct.listwrap(settings.elasticsearch), 1)[0]
+        es = random.choice(listwrap(settings["elasticsearch"]))
 
         ## SEND REQUEST
         headers = {'content-type': 'application/json'}
         response = requests.get(
-            es.host + ":" + str(es.port) + "/" + path,
+            es["host"] + ":" + str(es["port"]) + "/" + path,
             data=data,
             stream=True, #FOR STREAMING
             headers=headers,
@@ -54,14 +62,13 @@ def catch_all(path):
         # ALLOW CROSS DOMAIN (BECAUSE ES IS USUALLY NOT ON SAME SERVER AS PAGE)
         outbound_header = dict(response.headers)
         outbound_header["access-control-allow-origin"] = "*"
-
-        Log.println("path: {{path}}, request bytes={{request_content_length}}, response bytes={{response_content_length}}", {
-            "path": path,
-            "request_headers": dict(response.headers),
-            "request_content_length": len(data),
-            "response_headers": outbound_header,
-            "response_content_length": outbound_header["content-length"]
-        })
+        logger.debug("path: {path}, request bytes={request_content_length}, response bytes={response_content_length}".format(
+            path=path,
+            # request_headers=dict(response.headers),
+            request_content_length=len(data),
+            # response_headers=outbound_header,
+            response_content_length=outbound_header["content-length"]
+        ))
 
         ## FORWARD RESPONSE
         return flask.wrappers.Response(
@@ -71,8 +78,10 @@ def catch_all(path):
             headers=outbound_header
         )
     except Exception, e:
-        Log.warning("processing problem", e)
+        logger.warning("processing problem")
+        logger.exception(e.message)
         abort(400)
+
 
 def filter(path_string, query):
     """
@@ -81,23 +90,28 @@ def filter(path_string, query):
     try:
         path = path_string.split("/")
 
+        ## EXPECTING {index_name} "/" {type_name} "/" {_id}
         ## EXPECTING {index_name} "/" {type_name} "/_search"
         ## EXPECTING {index_name} "/_search"
-        if len(path) not in [2, 3]:
-            Log.error("request must be of form:  {index_name} \"/\" {type_name} \"/_search\" ")
-        if path[-1] not in ["_mapping", "_search"]:
-            Log.error("request path must end with _mapping or _search")
+        if len(path) == 2:
+            if path[-1] not in ["_mapping", "_search"]:
+                raise Exception("request path must end with _mapping or _search")
+        elif len(path) == 3:
+            pass  #OK
+        else:
+            raise Exception('request must be of form: {index_name} "/" {type_name} "/_search" ')
 
         ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
-        if path[-1] == "_search" and CNV.JSON2object(query).query is None:
-            Log.error("_search must have query")
+        if path[-1] == "_search" and json.loads(query).get("query", None) is None:
+            raise Exception("_search must have query")
 
         ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
         if path[-1] == "_mapping" and len(query) > 0:
-            Log.error("Can not provide content when requesting _mapping")
+            raise Exception("Can not provide content when requesting _mapping")
 
     except Exception, e:
-        Log.error("Not allowed: {{path}}:\n{{query}}", {"path": path_string, "query": query}, e)
+        logger.exception(e.message)
+        raise Exception("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
 
 
 # Snagged from http://stackoverflow.com/questions/10999990/python-flask-how-to-get-whole-raw-post-body
@@ -132,13 +146,47 @@ class WSGICopyBody(object):
 
 app.wsgi_app = WSGICopyBody(app.wsgi_app)
 
+logger = None
+
 if __name__ == '__main__':
 
     try:
-        settings = startup.read_settings()
-        Log.start(settings.debug)
-        app.run(**settings.flask.dict)
-        app = HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
-    finally:
-        Log.println("Execution complete")
-        Log.stop()
+        parser = argparse.ArgumentParser()
+        parser.add_argument(*["--settings", "--settings-file", "--settings_file"], **{
+            "help": "path to JSON file with settings",
+            "type": str,
+            "dest": "filename",
+            "default": "./settings.json",
+            "required": False
+        })
+        namespace = parser.parse_args()
+        args = {k: getattr(namespace, k) for k in vars(namespace)}
+
+        if not os.path.exists(args["filename"]):
+            raise Exception("Can not file settings file {filename}".format(filename=args["filename"]))
+
+        with codecs.open(args["filename"], "r", encoding="utf-8") as file:
+            json_data = file.read()
+        settings = json.loads(json_data)
+        settings["args"] = args
+
+        logger = logging.getLogger('esFrontLine')
+        logger.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+        for d in listwrap(settings["debug"]["log"]):
+            if d.get("filename", None):
+                fh = RotatingFileHandler(**d)
+                fh.setLevel(logging.DEBUG)
+                fh.setFormatter(formatter)
+                logger.addHandler(fh)
+            elif d.get("stream", None) in ("sys.stdout", "sys.stderr"):
+                ch = logging.StreamHandler(stream=eval(d["stream"]))
+                ch.setLevel(logging.DEBUG)
+                ch.setFormatter(formatter)
+                logger.addHandler(ch)
+
+        HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
+        app.run(**settings["flask"])
+    except Exception, e:
+        print(e.message)
