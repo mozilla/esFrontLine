@@ -41,6 +41,16 @@ def listwrap(value):
         return [value]
 
 
+class Except(Exception):
+    def __init__(self, message):
+        super(Exception, self).__init__(self, message)
+        self._message = message
+
+    @property
+    def message(self):
+        return self._message
+
+
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
 @app.route('/<path:path>', methods=['GET', 'POST'])
 def catch_all(path):
@@ -52,8 +62,8 @@ def catch_all(path):
         es = random.choice(listwrap(settings["elasticsearch"]))
 
         ## SEND REQUEST
-        headers = flask.request.headers
-        headers['content-type']='application/json'
+        headers = dict(flask.request.headers)
+        headers['content-type'] = 'application/json'
 
         response = requests.get(
             es["host"] + ":" + str(es["port"]) + "/" + path,
@@ -81,9 +91,11 @@ def catch_all(path):
             status=response.status_code,
             headers=outbound_header
         )
+    except Except, e:
+        logger.warning(e.message)
+        abort(400)
     except Exception, e:
-        logger.warning("processing problem")
-        logger.exception(e.message)
+        logger.exception(str(e))
         abort(400)
 
 
@@ -99,24 +111,29 @@ def filter(path_string, query):
         ## EXPECTING {index_name} "/_search"
         if len(path) == 2:
             if path[-1] not in ["_mapping", "_search"]:
-                raise Exception("request path must end with _mapping or _search")
+                raise Except("request path must end with _mapping or _search")
         elif len(path) == 3:
             if path[-1] not in ["_search"]:
-                raise Exception("request path must end with _mapping or _search")
+                raise Except("request path must end with _mapping or _search")
         else:
-            raise Exception('request must be of form: {index_name} "/" {type_name} "/_search" ')
+            raise Except('request must be of form: {index_name} "/" {type_name} "/_search" ')
+
+        ## COMPARE TO WHITE LIST
+        if path[0] not in settings["whitelist"]:
+            raise Except('index not in whitelist: {index_name}', {"index_name":path[0]})
+
 
         ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
         if path[-1] == "_search" and json.loads(query).get("query", None) is None:
-            raise Exception("_search must have query")
+            raise Except("_search must have query")
 
         ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
         if path[-1] == "_mapping" and len(query) > 0:
-            raise Exception("Can not provide content when requesting _mapping")
+            raise Except("Can not provide content when requesting _mapping")
 
     except Exception, e:
-        logger.exception(e.message)
-        raise Exception("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
+        logger.warning(e.message)
+        raise Except("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
 
 
 # Snagged from http://stackoverflow.com/questions/10999990/python-flask-how-to-get-whole-raw-post-body
@@ -167,12 +184,13 @@ if __name__ == '__main__':
         args = {k: getattr(namespace, k) for k in vars(namespace)}
 
         if not os.path.exists(args["filename"]):
-            raise Exception("Can not file settings file {filename}".format(filename=args["filename"]))
+            raise Except("Can not file settings file {filename}".format(filename=args["filename"]))
 
         with codecs.open(args["filename"], "r", encoding="utf-8") as file:
             json_data = file.read()
         settings = json.loads(json_data)
         settings["args"] = args
+        settings["whitelist"] = listwrap(settings.get("whitelist", None))
 
         logger = logging.getLogger('esFrontLine')
         logger.setLevel(logging.DEBUG)

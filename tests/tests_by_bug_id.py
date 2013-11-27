@@ -30,18 +30,28 @@ def test_943472():
 
 def test_943478():
     #https://bugzilla.mozilla.org/show_bug.cgi?id=943478
-    response = request("GET", url + "/bugs/_stats/")
+    response = request("POST", url + "/telemetry_agg_valid_201302/_search", data="""
+    {
+    	"query":{"filtered":{
+    		"query":{"match_all":{}}
+    	}},
+    	"from":0,
+    	"size":0,
+    	"sort":[],
+    	"facets":{"default":{"terms":{"field":"info.OS","size":200000}}}
+    }""")
     if response.status_code != 400:
         Log.error("should not allow")
 
 
-def request(type, url, **kwargs):
-    Log.note("CLIENT REQUEST: {{type}} {{url}}  args={{args}}", {
+def request(type, url, data=None, **kwargs):
+    Log.note("CLIENT REQUEST: {{type}} {{url}} data={{data|newline|indent}}", {
         "type": type,
         "url": url,
+        "data": data,
         "args": kwargs
     })
-    response = requests.request(type, url, **kwargs)
+    response = requests.request(type, url, data=data, **kwargs)
     Log.note("CLIENT RESPONSE: {{response.status_code}}  {{response_text}}", {"response": response})
     return response
 
@@ -70,11 +80,14 @@ def run_app(please_stop):
     proc.send_signal(signal.CTRL_C_EVENT)
 
 
+
 thread = Thread.run("run app", run_app)
 try:
     server_is_ready.wait_for_go()
     test_943465()
     test_943472()
+    test_943478()
     Log.note("ALL TESTS PASS")
 finally:
     thread.please_stop.go()
+    Log.stop()

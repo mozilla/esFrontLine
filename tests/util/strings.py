@@ -14,6 +14,12 @@ import struct
 from .struct import Struct
 
 
+def newline(value):
+    """
+    ADD NEWLINE, IF SOMETHING
+    """
+    return "\n"+value.lstrip("\n")
+
 def indent(value, prefix=u"\t", indent=None):
     if indent != None:
         prefix=prefix*indent
