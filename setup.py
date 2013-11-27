@@ -24,6 +24,11 @@ setup(
     install_requires=['Flask==0.9', 'requests==1.2.3'],
     include_package_data=True,
     zip_safe=False,
+    entry_points={
+        "console_scripts":[
+            "esFrontLine = esFrontLine.app:main"
+        ]
+    },
     classifiers=[  #https://pypi.python.org/pypi?%3Aaction=list_classifiers
         "Development Status :: 2 - Pre-Alpha",
         "Topic :: Internet :: Proxy Servers",

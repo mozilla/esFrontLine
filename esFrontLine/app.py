@@ -120,7 +120,7 @@ def filter(path_string, query):
 
         ## COMPARE TO WHITE LIST
         if path[0] not in settings["whitelist"]:
-            raise Except('index not in whitelist: {index_name}', {"index_name":path[0]})
+            raise Except('index not in whitelist: {index_name}', {"index_name": path[0]})
 
 
         ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
@@ -169,8 +169,10 @@ class WSGICopyBody(object):
 app.wsgi_app = WSGICopyBody(app.wsgi_app)
 
 logger = None
+settings = {}
 
-if __name__ == '__main__':
+
+def main():
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument(*["--settings", "--settings-file", "--settings_file"], **{
@@ -188,11 +190,11 @@ if __name__ == '__main__':
 
         with codecs.open(args["filename"], "r", encoding="utf-8") as file:
             json_data = file.read()
-        settings = json.loads(json_data)
+        globals()["settings"] = json.loads(json_data)
         settings["args"] = args
         settings["whitelist"] = listwrap(settings.get("whitelist", None))
 
-        logger = logging.getLogger('esFrontLine')
+        globals()["logger"] = logging.getLogger('esFrontLine')
         logger.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
@@ -211,5 +213,8 @@ if __name__ == '__main__':
         HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
         app.run(**settings["flask"])
     except Exception, e:
-        print(e.message)
+        print(str(e))
 
+
+if __name__ == '__main__':
+    main()
