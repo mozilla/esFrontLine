@@ -19,6 +19,7 @@
             "threaded":true,
             "processes":1
         },
+        "whitelist":["bugs", "org_chart", "bug_summary", "reviews"],
         "debug":{
             "log":[{
                 "filename": "./tests/results/logs/app.log",

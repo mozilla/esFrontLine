@@ -28,6 +28,7 @@ def test_943472():
     if response.status_code != 400:
         Log.error("should not allow")
 
+
 def test_943478():
     #https://bugzilla.mozilla.org/show_bug.cgi?id=943478
     response = request("POST", url + "/telemetry_agg_valid_201302/_search", data="""
@@ -43,6 +44,21 @@ def test_943478():
     if response.status_code != 400:
         Log.error("should not allow")
 
+    # VERIFY ALLOWED INDEX GETS THROUGH
+    response = request("POST", url + "/bugs/_search", data="""
+    {
+    	"query":{"filtered":{
+    		"query":{"match_all":{}},
+    		"filter":{"range":{"bug_id":{"lt":700000}}}
+    	}},
+    	"from":0,
+    	"size":0,
+    	"sort":[],
+    	"facets":{"default":{"terms":{"field":"product","size":200000}}}
+    }""")
+    if response.status_code != 200:
+        Log.error("query should work")
+
 
 def request(type, url, data=None, **kwargs):
     Log.note("CLIENT REQUEST: {{type}} {{url}} data={{data|newline|indent}}", {
@@ -52,7 +68,10 @@ def request(type, url, data=None, **kwargs):
         "args": kwargs
     })
     response = requests.request(type, url, data=data, **kwargs)
-    Log.note("CLIENT RESPONSE: {{response.status_code}}  {{response_text}}", {"response": response})
+    Log.note("CLIENT RESPONSE: {{status_code}}\n{{text|indent}}", {
+        "status_code": response.status_code,
+        "text": response.text
+    })
     return response
 
 
@@ -78,7 +97,6 @@ def run_app(please_stop):
         Log.note("SERVER: {{line}}", {"line": line.strip()})
 
     proc.send_signal(signal.CTRL_C_EVENT)
-
 
 
 thread = Thread.run("run app", run_app)

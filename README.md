@@ -33,6 +33,8 @@ You must write your own setting.json file with the following properties set:
 
   * **debug** - turn on debugging
 
+  * **whitelist** - list of indexes that are allowed
+
 Here is an example of my ```settings.json``` file
 
     {
@@ -56,9 +58,10 @@ Here is an example of my ```settings.json``` file
             "threaded":true,
             "processes":1
         },
+        "whitelist":["bugs", "org_chart", "bug_summary", "reviews"],
         "debug":{
             "log":[{
-                "filename": "./results/logs/app.log",
+                "filename": "./tests/results/logs/app.log",
                 "maxBytes": 10000000,
                 "backupCount": 200,
                 "encoding": "utf8"
@@ -68,6 +71,7 @@ Here is an example of my ```settings.json``` file
         }
 
     }
+
 Execution
 ---------
 
