@@ -12,11 +12,25 @@ url = "http://localhost:9292"
 
 
 def test_943465():
+    #https://bugzilla.mozilla.org/show_bug.cgi?id=943465
     response = request("GET", url + "/_cluster/nodes/_local")
     if response.status_code != 400:
         Log.error("should not allow")
 
     response = request("GET", url + "/_cluster/nodes/stats")
+    if response.status_code != 400:
+        Log.error("should not allow")
+
+
+def test_943472():
+    #https://bugzilla.mozilla.org/show_bug.cgi?id=943472
+    response = request("GET", url + "/bugs/_stats/")
+    if response.status_code != 400:
+        Log.error("should not allow")
+
+def test_943478():
+    #https://bugzilla.mozilla.org/show_bug.cgi?id=943478
+    response = request("GET", url + "/bugs/_stats/")
     if response.status_code != 400:
         Log.error("should not allow")
 
@@ -60,6 +74,7 @@ thread = Thread.run("run app", run_app)
 try:
     server_is_ready.wait_for_go()
     test_943465()
+    test_943472()
     Log.note("ALL TESTS PASS")
 finally:
     thread.please_stop.go()
