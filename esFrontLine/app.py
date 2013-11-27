@@ -16,9 +16,10 @@ import random
 from flask import Flask, json
 import flask
 import requests
-import sys
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
+import sys
+
 
 app = Flask(__name__)
 
@@ -51,7 +52,9 @@ def catch_all(path):
         es = random.choice(listwrap(settings["elasticsearch"]))
 
         ## SEND REQUEST
-        headers = {'content-type': 'application/json'}
+        headers = flask.request.headers
+        headers['content-type']='application/json'
+
         response = requests.get(
             es["host"] + ":" + str(es["port"]) + "/" + path,
             data=data,
@@ -98,7 +101,8 @@ def filter(path_string, query):
             if path[-1] not in ["_mapping", "_search"]:
                 raise Exception("request path must end with _mapping or _search")
         elif len(path) == 3:
-            pass  #OK
+            if path[-1] not in ["_search"]:
+                raise Exception("request path must end with _mapping or _search")
         else:
             raise Exception('request must be of form: {index_name} "/" {type_name} "/_search" ')
 
@@ -150,7 +154,6 @@ app.wsgi_app = WSGICopyBody(app.wsgi_app)
 logger = None
 
 if __name__ == '__main__':
-
     try:
         parser = argparse.ArgumentParser()
         parser.add_argument(*["--settings", "--settings-file", "--settings_file"], **{
@@ -191,3 +194,4 @@ if __name__ == '__main__':
         app.run(**settings["flask"])
     except Exception, e:
         print(e.message)
+

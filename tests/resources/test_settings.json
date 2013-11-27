@@ -1,0 +1,33 @@
+    {
+        "elasticsearch":[{
+            "host":"http://elasticsearch4.metrics.scl3.mozilla.com",
+            "port":9200
+        },{
+            "host":"http://elasticsearch5.metrics.scl3.mozilla.com",
+            "port":9200
+        },{
+            "host":"http://elasticsearch7.metrics.scl3.mozilla.com",
+            "port":9200
+        },{
+            "host":"http://elasticsearch8.metrics.scl3.mozilla.com",
+            "port":9200
+        }],
+        "flask":{
+            "host":"0.0.0.0",
+            "port":9292,
+            "debug":false,
+            "threaded":true,
+            "processes":1
+        },
+        "debug":{
+            "log":[{
+                "filename": "./tests/results/logs/app.log",
+                "maxBytes": 10000000,
+                "backupCount": 200,
+                "encoding": "utf8"
+            },{
+                "stream":"sys.stdout"
+            }]
+        }
+
+    }
