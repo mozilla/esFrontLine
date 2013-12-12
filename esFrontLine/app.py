@@ -113,7 +113,7 @@ def filter(path_string, query):
             if path[-1] not in ["_mapping", "_search"]:
                 raise Except("request path must end with _mapping or _search")
         elif len(path) == 3:
-            if path[-1] not in ["_search"]:
+            if path[-1] not in ["_mapping", "_search"]:
                 raise Except("request path must end with _mapping or _search")
         else:
             raise Except('request must be of form: {index_name} "/" {type_name} "/_search" ')

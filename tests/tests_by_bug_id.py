@@ -54,6 +54,13 @@ def test_943478(url):
     if response.status_code != 200:
         Log.error("query should work")
 
+def test_allow_3path_mapping(url):
+    #WE SHOULD ALLOW -mapping WITH INDEX AND TYPE IN PATH
+    #http://klahnakoski-es.corp.tor1.mozilla.com:9204/bugs/bug_version/_mapping
+    response = request("POST", url + "/bugs/bug_version/_mapping")
+    if response.status_code != 200:
+        Log.error("should be allowed")
+
 
 def request(type, url, data=None, **kwargs):
     Log.note("CLIENT REQUEST: {{type}} {{url}} data={{data|newline|indent}}", {
@@ -98,6 +105,7 @@ def all_tests(url):
     test_943465(url)
     test_943472(url)
     test_943478(url)
+    test_allow_3path_mapping(url)
     Log.note("ALL TESTS PASS")
 
 
