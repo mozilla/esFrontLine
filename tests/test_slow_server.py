@@ -24,9 +24,11 @@ from util.threads import Thread, Signal
 
 app = Flask(__name__)
 
-PATH = '/bugs/_search'
-PORT = 9299
+PATH = '/bugs/_mapping'
+SLOW_PORT = 9299
+PROXY_PORT = 9298
 RATE = 4.0   # per second
+proxy_is_ready = Signal()
 server_is_ready = Signal()
 
 
@@ -57,7 +59,7 @@ def serve_slowly(path):
         abort(400)
 
 
-def run(please_stop):
+def run_slow_server(please_stop):
     proc = subprocess.Popen(
         ["python", "tests\\test_slow_server.py"],
         stdin=subprocess.PIPE,
@@ -78,22 +80,45 @@ def run(please_stop):
     proc.send_signal(signal.CTRL_C_EVENT)
 
 
+def run_proxy(please_stop):
+    proc = subprocess.Popen(
+        ["python", "esFrontLine\\app.py", "--settings", "tests/resources/slow_server_settings.json"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=-1,
+        creationflags=CREATE_NEW_PROCESS_GROUP
+    )
+
+    while not please_stop:
+        line = proc.stdout.readline()
+        if not line:
+            continue
+        if line.find(" * Running on") >= 0:
+            proxy_is_ready.go()
+        Log.note("PROXY: {{line}}", {"line": line.strip()})
+
+    proc.send_signal(signal.CTRL_C_EVENT)
+
+
 def test_slow_server():
     """
     TEST THAT THE app ACTUALLY STREAMS.  WE SHOULD GET A RESPONSE BEFORE THE SERVER
     FINISHES DELIVERING
     """
-    thread = Thread.run("run slow server", run)
+    slow_server_thread = Thread.run("run slow server", run_slow_server)
+    proxy_thread = Thread.run("run slow server", run_proxy)
 
     try:
+        proxy_is_ready.wait_for_go()
         server_is_ready.wait_for_go()
 
         start = time.clock()
-        response = requests.get("http://localhost:"+str(PORT)+PATH, stream=True)
+        response = requests.get("http://localhost:"+str(PROXY_PORT)+PATH, stream=True)
         for i, data in enumerate(stream(response.raw)):
-            Log.note("GOT RESPONSE:\n{{data|indent}}", {"data": data})
+            Log.note("CLIENT GOT RESPONSE:\n{{data|indent}}", {"data": data})
             end = time.clock()
-            if i == 0 and end - start > 20:
+            if i == 0 and end - start > 5:  # IF WE GET DATA BEFORE 5sec, THEN WE KNOW WE ARE STREAMING
                 Log.error("should have something by now")
         if response.status_code != 200:
             Log.error("Expecting a positive response")
@@ -101,13 +126,15 @@ def test_slow_server():
     except Exception, e:
         Log.error("Not expected", e)
     finally:
-        thread.please_stop.go()
+        slow_server_thread.please_stop.go()
+        proxy_thread.please_stop.go()
 
 
 if __name__ == "__main__":
+    #THIS WILL RUN THE SLOW SERVER
     app.run(
         host="0.0.0.0",
-        port=PORT,
+        port=SLOW_PORT,
         debug=False,
         threaded=False,
         processes=1

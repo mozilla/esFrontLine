@@ -107,10 +107,10 @@ def run_app(please_stop):
 
 
 def all_tests(url):
-    test_943465(url)
-    test_943472(url)
-    test_943478(url)
-    test_allow_3path_mapping(url)
+    # test_943465(url)
+    # test_943472(url)
+    # test_943478(url)
+    # test_allow_3path_mapping(url)
     test_slow_server()
     Log.note("ALL TESTS PASS")
 

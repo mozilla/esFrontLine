@@ -90,7 +90,7 @@ def catch_all(path, type):
             # request_headers=dict(response.headers),
             request_content_length=len(data),
             # response_headers=outbound_header,
-            response_content_length=outbound_header["content-length"]
+            response_content_length=outbound_header.get("content-length", None)
         ))
 
         ## FORWARD RESPONSE
