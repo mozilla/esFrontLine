@@ -57,7 +57,7 @@ def test_943478(url):
 def test_allow_3path_mapping(url):
     #WE SHOULD ALLOW -mapping WITH INDEX AND TYPE IN PATH
     #http://klahnakoski-es.corp.tor1.mozilla.com:9204/bugs/bug_version/_mapping
-    response = request("POST", url + "/bugs/bug_version/_mapping")
+    response = request("GET", url + "/bugs/bug_version/_mapping")
     if response.status_code != 200:
         Log.error("should be allowed")
 
@@ -70,7 +70,7 @@ def request(type, url, data=None, **kwargs):
         "args": kwargs
     })
     response = requests.request(type, url, data=data, **kwargs)
-    Log.note("CLIENT RESPONSE: {{status_code}}\n{{text|indent}}", {
+    Log.note("CLIENT GOT RESPONSE: {{status_code}}\n{{text|indent}}", {
         "status_code": response.status_code,
         "text": response.text
     })

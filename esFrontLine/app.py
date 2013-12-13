@@ -18,8 +18,7 @@ import flask
 import requests
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
-import sys
-
+import sys  # REQUIRED FOR DYNAMIC DEBUG
 
 app = Flask(__name__)
 
@@ -51,9 +50,19 @@ class Except(Exception):
         return self._message
 
 
-@app.route('/', defaults={'path': ''}, methods=['GET', 'POST'])
-@app.route('/<path:path>', methods=['GET', 'POST'])
-def catch_all(path):
+@app.route('/', defaults={'path': ''}, methods=['GET'])
+@app.route('/<path:path>', methods=['GET'])
+def catch_all_get(path):
+    return catch_all(path, "get")
+
+
+@app.route('/', defaults={'path': ''}, methods=['POST'])
+@app.route('/<path:path>', methods=['POST'])
+def catch_all_post(path):
+    return catch_all(path, 'post')
+
+
+def catch_all(path, type):
     try:
         data = flask.request.environ['body_copy']
         filter(path, data)
@@ -62,10 +71,10 @@ def catch_all(path):
         es = random.choice(listwrap(settings["elasticsearch"]))
 
         ## SEND REQUEST
-        headers = dict(flask.request.headers)
+        headers = {k: v for k, v in flask.request.headers if v is not None and v != "" and v != "null"}
         headers['content-type'] = 'application/json'
 
-        response = requests.get(
+        response = requests.request(type,
             es["host"] + ":" + str(es["port"]) + "/" + path,
             data=data,
             stream=True, #FOR STREAMING

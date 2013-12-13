@@ -13,7 +13,7 @@ except Exception:
 
 setup(
     name='esFrontLine',
-    version="0.9.13331",
+    version="1.1.13347",
     description='Limit restful requests to backend ElasticSearch cluster:  Queries only.',
     long_description=long_desc,
     author='Kyle Lahnakoski',
