@@ -2,6 +2,8 @@ from _subprocess import CREATE_NEW_PROCESS_GROUP
 import subprocess
 import requests
 import signal
+import test_slow_server
+from test_slow_server import test_slow_server
 from util.logs import Log
 from util.threads import Thread, Signal
 
@@ -54,12 +56,15 @@ def test_943478(url):
     if response.status_code != 200:
         Log.error("query should work")
 
+
 def test_allow_3path_mapping(url):
     #WE SHOULD ALLOW -mapping WITH INDEX AND TYPE IN PATH
     #http://klahnakoski-es.corp.tor1.mozilla.com:9204/bugs/bug_version/_mapping
     response = request("GET", url + "/bugs/bug_version/_mapping")
     if response.status_code != 200:
         Log.error("should be allowed")
+
+
 
 
 def request(type, url, data=None, **kwargs):
@@ -106,8 +111,8 @@ def all_tests(url):
     test_943472(url)
     test_943478(url)
     test_allow_3path_mapping(url)
+    test_slow_server()
     Log.note("ALL TESTS PASS")
-
 
 
 def main():
@@ -121,5 +126,6 @@ def main():
         thread.please_stop.go()
         Log.stop()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main()

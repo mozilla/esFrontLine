@@ -77,6 +77,7 @@ class File(object):
     def __iter__(self):
         #NOT SURE HOW TO MAXIMIZE FILE READ SPEED
         #http://stackoverflow.com/questions/8009882/how-to-read-large-file-line-by-line-in-python
+        #http://effbot.org/zone/wide-finder.htm
         def output():
             with io.open(self._filename, "rb") as f:
                 for line in f:
