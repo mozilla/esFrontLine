@@ -16,6 +16,7 @@ import random
 from flask import Flask, json
 import flask
 import requests
+import time
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
 import sys  # REQUIRED FOR DYNAMIC DEBUG
@@ -74,10 +75,11 @@ def catch_all(path, type):
         headers = {k: v for k, v in flask.request.headers if v is not None and v != "" and v != "null"}
         headers['content-type'] = 'application/json'
 
-        response = requests.request(type,
+        response = requests.request(
+            type,
             es["host"] + ":" + str(es["port"]) + "/" + path,
             data=data,
-            stream=True, #FOR STREAMING
+            stream=True,  # FOR STREAMING
             headers=headers,
             timeout=90
         )
@@ -85,12 +87,33 @@ def catch_all(path, type):
         # ALLOW CROSS DOMAIN (BECAUSE ES IS USUALLY NOT ON SAME SERVER AS PAGE)
         outbound_header = dict(response.headers)
         outbound_header["access-control-allow-origin"] = "*"
+
+        # LOG REQUEST TO ES
+        request = flask.request
+        uid = int(round(time.time() * 1000))
+        slim_request = {
+            "remote_addr": request.remote_addr,
+            "method": request.method,
+            "path": request.path,
+            "request_length": len(data),
+            "response_length": int(outbound_header["content-length"]) if "content-length" in outbound_header else None
+        }
+        try:
+            requests.request(
+                type,
+                es["host"] + ":" + str(es["port"]) + "/debug/esfrontline/"+str(uid),
+                data=json.dumps(slim_request),
+                timeout=5
+            )
+        except Exception, e:
+            pass
+
         logger.debug("path: {path}, request bytes={request_content_length}, response bytes={response_content_length}".format(
             path=path,
             # request_headers=dict(response.headers),
             request_content_length=len(data),
             # response_headers=outbound_header,
-            response_content_length=outbound_header.get("content-length", None)
+            response_content_length=int(outbound_header["content-length"]) if "content-length" in outbound_header else None
         ))
 
         ## FORWARD RESPONSE
