@@ -1,15 +1,12 @@
     {
         "elasticsearch":[{
-            "host":"http://elasticsearch4.metrics.scl3.mozilla.com",
+            "host":"http://elasticsearch1.bugs.scl3.mozilla.com",
             "port":9200
         },{
-            "host":"http://elasticsearch5.metrics.scl3.mozilla.com",
+            "host":"http://elasticsearch2.bugs.scl3.mozilla.com",
             "port":9200
         },{
-            "host":"http://elasticsearch7.metrics.scl3.mozilla.com",
-            "port":9200
-        },{
-            "host":"http://elasticsearch8.metrics.scl3.mozilla.com",
+            "host":"http://elasticsearch3.bugs.scl3.mozilla.com",
             "port":9200
         }],
         "flask":{
@@ -19,7 +16,7 @@
             "threaded":true,
             "processes":1
         },
-        "whitelist":["bugs", "org_chart", "bug_summary", "reviews"],
+        "whitelist":["public_bugs"],
         "debug":{
             "log":[{
                 "filename": "./tests/results/logs/app.log",

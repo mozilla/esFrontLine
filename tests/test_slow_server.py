@@ -18,13 +18,15 @@ import requests
 from werkzeug.exceptions import abort
 from esFrontLine.app import stream
 from util.cnv import CNV
-from util.logs import Log
+from util.env.logs import Log
 from util.strings import expand_template
-from util.threads import Thread, Signal
+from util.thread.threads import Thread, Signal
 
 app = Flask(__name__)
 
-PATH = '/bugs/_mapping'
+WHITELISTED = "public_bugs"  # ENSURE THIS IS IN THE slow_server_settings.json WHITELIST
+
+PATH = '/'+WHITELISTED+'/_mapping'
 SLOW_PORT = 9299
 PROXY_PORT = 9298
 RATE = 4.0   # per second
@@ -37,15 +39,15 @@ server_is_ready = Signal()
 def serve_slowly(path):
     def octoberfest():
         for bb in range(99, 2, -1):
-            yield ("0"*65535)+"\n"  #BUG ENOUGH TO FILL THE INCOMING BUFFER
+            yield ("0"*65535)+"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
             Thread.sleep(1.0/RATE)
             yield CNV.unicode2utf8(expand_template("{{num}} bottles of beer on the wall! {{num}} bottles of beer!  Take one down, pass it around! {{less}} bottles of beer on he wall!\n", {
                 "num": bb,
                 "less": bb - 1
             }))
-        yield ("0"*65535)+"\n"  #BUG ENOUGH TO FILL THE INCOMING BUFFER
+        yield ("0"*65535)+"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
         yield CNV.unicode2utf8(u"2 bottles of beer on the wall! 2 bottles of beer!  Take one down, pass it around! 1 bottle of beer on he wall!\n")
-        yield ("0"*65535)+"\n"  #BUG ENOUGH TO FILL THE INCOMING BUFFER
+        yield ("0"*65535)+"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
         yield CNV.unicode2utf8(u"1 bottle of beer on the wall! 1 bottle of beer!  Take one down, pass it around! 0 bottles of beer on he wall.\n")
 
     try:
@@ -101,13 +103,13 @@ def run_proxy(please_stop):
     proc.send_signal(signal.CTRL_C_EVENT)
 
 
-def test_slow_server():
+def test_slow_streaming():
     """
     TEST THAT THE app ACTUALLY STREAMS.  WE SHOULD GET A RESPONSE BEFORE THE SERVER
     FINISHES DELIVERING
     """
     slow_server_thread = Thread.run("run slow server", run_slow_server)
-    proxy_thread = Thread.run("run slow server", run_proxy)
+    proxy_thread = Thread.run("run proxy", run_proxy)
 
     try:
         proxy_is_ready.wait_for_go()
@@ -118,7 +120,7 @@ def test_slow_server():
         for i, data in enumerate(stream(response.raw)):
             Log.note("CLIENT GOT RESPONSE:\n{{data|indent}}", {"data": data})
             end = time.clock()
-            if i == 0 and end - start > 5:  # IF WE GET DATA BEFORE 5sec, THEN WE KNOW WE ARE STREAMING
+            if i == 0 and end - start > 10:  # IF WE GET DATA BEFORE 10sec, THEN WE KNOW WE ARE STREAMING
                 Log.error("should have something by now")
         if response.status_code != 200:
             Log.error("Expecting a positive response")

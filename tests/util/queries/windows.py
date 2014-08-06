@@ -8,10 +8,17 @@
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
 
-from ..logs import Log
+from __future__ import unicode_literals
+import functools
+from ..struct import StructList
+from ..maths import stats
+from ..collections import MIN, MAX
+from ..env.logs import Log
 from ..maths import Math
-from ..multiset import Multiset
-from ..stats import Z_moment, stats2z_moment, z_moment2stats
+from ..collections.multiset import Multiset
+from ..maths.stats import Z_moment, z_moment2stats
+
+# A VARIETY OF SLIDING WINDOW FUNCTIONS
 
 
 class AggregationFunction(object):
@@ -73,21 +80,63 @@ class WindowFunction(AggregationFunction):
         Log.error("not implemented yet")
 
 
-class Stats(WindowFunction):
-    def __init__(self):
-        object.__init__(self)
-        self.total = Z_moment(0, 0, 0)
+def Stats(**kwargs):
+    if not kwargs:
+        return _SimpleStats
+    else:
+        return functools.partial(_Stats, *[], **kwargs)
 
+
+class _Stats(WindowFunction):
+    """
+    TRACK STATS, BUT IGNORE OUTLIERS
+    """
+
+    def __init__(self, middle=None):
+        object.__init__(self)
+        self.middle = middle
+        self.samples = StructList()
 
     def add(self, value):
         if value == None:
             return
-        self.total += stats2z_moment(value)
+        self.samples.append(value)
 
     def sub(self, value):
         if value == None:
             return
-        self.total -= stats2z_moment(value)
+        self.samples.remove(value)
+
+    def merge(self, agg):
+        Log.error("Do not know how to handle")
+
+    def end(self):
+        ignore = Math.ceiling(len(self.samples) * (1 - self.middle) / 2)
+        if ignore * 2 >= len(self.samples):
+            return stats.Stats()
+        output = stats.Stats(samples=sorted(self.samples)[ignore:len(self.samples) - ignore:])
+        output.samples = list(self.samples)
+        return output
+
+
+class _SimpleStats(WindowFunction):
+    """
+    AGGREGATE Stats OBJECTS, NOT JUST VALUES
+    """
+
+    def __init__(self):
+        object.__init__(self)
+        self.total = Z_moment(0, 0, 0)
+
+    def add(self, value):
+        if value == None:
+            return
+        self.total += Z_moment.new_instance([value])
+
+    def sub(self, value):
+        if value == None:
+            return
+        self.total -= Z_moment.new_instance([value])
 
     def merge(self, agg):
         self.total += agg.total
@@ -104,6 +153,7 @@ class Min(WindowFunction):
 
     def add(self, value):
         if value == None:
+
             return
         self.total.add(value)
 
@@ -113,7 +163,7 @@ class Min(WindowFunction):
         self.total.remove(value)
 
     def end(self):
-        return Math.min(self.total)
+        return MIN(self.total)
 
 
 class Max(WindowFunction):
@@ -133,7 +183,7 @@ class Max(WindowFunction):
         self.total.remove(value)
 
     def end(self):
-        return Math.max(self.total)
+        return MAX(*self.total)
 
 
 class Count(WindowFunction):
@@ -174,5 +224,3 @@ class Sum(WindowFunction):
 
     def end(self):
         return self.total
-
-
