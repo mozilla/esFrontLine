@@ -51,6 +51,11 @@ class Except(Exception):
         return self._message
 
 
+@app.route('/', defaults={'path': ''}, methods=['HEAD'])
+@app.route('/<path:path>', methods=['HEAD'])
+def catch_all_head(path):
+    return catch_all(path, "HEAD")
+
 @app.route('/', defaults={'path': ''}, methods=['GET'])
 @app.route('/<path:path>', methods=['GET'])
 def catch_all_get(path):
@@ -66,7 +71,7 @@ def catch_all_post(path):
 def catch_all(path, type):
     try:
         data = flask.request.environ['body_copy']
-        filter(path, data)
+        filter(type, path, data)
 
         #PICK RANDOM ES
         es = random.choice(listwrap(settings["elasticsearch"]))
@@ -90,7 +95,7 @@ def catch_all(path, type):
 
         # LOG REQUEST TO ES
         request = flask.request
-        uid = int(round(time.time() * 1000))
+        uid = int(round(time.time() * 1000.0))
         slim_request = {
             "remote_addr": request.remote_addr,
             "method": request.method,
@@ -131,11 +136,17 @@ def catch_all(path, type):
         abort(400)
 
 
-def filter(path_string, query):
+def filter(type, path_string, query):
     """
     THROW EXCEPTION IF THIS IS NOT AN ElasticSearch QUERY
     """
     try:
+        if type.upper() == "HEAD":
+            if path_string in ["", "/"]:
+                return  # HEAD REQUESTS ARE ALLOWED
+            else:
+                raise Except("HEAD requests are generally not allowed")
+
         path = path_string.split("/")
 
         ## EXPECTING {index_name} "/" {type_name} "/" {_id}
@@ -152,7 +163,7 @@ def filter(path_string, query):
 
         ## COMPARE TO WHITE LIST
         if path[0] not in settings["whitelist"]:
-            raise Except('index not in whitelist: {index_name}', {"index_name": path[0]})
+            raise Except('index not in whitelist: {index_name}'.format({"index_name": path[0]}))
 
 
         ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
