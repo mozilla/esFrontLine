@@ -77,3 +77,7 @@ Execution
 
     python app.py --settings-file <path_to_file_with_JSON_settings>
 
+Code Source
+-----------
+
+[https://github.com/klahnakoski/esFrontLine](https://github.com/klahnakoski/esFrontLine)
