@@ -21,7 +21,7 @@ setup(
     url='https://github.com/klahnakoski/esFrontLine',
     license='MPL 2.0',
     packages=['esFrontLine'],
-    install_requires=['Flask==0.9', 'requests==1.2.3'],
+    install_requires=['Flask==0.10.1', 'requests==2.3.0'],
     include_package_data=True,
     zip_safe=False,
     entry_points={
