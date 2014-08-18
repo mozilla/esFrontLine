@@ -19,6 +19,7 @@ from urllib import urlencode
 
 from . import struct
 from . import jsons
+from .times.dates import Date
 from .jsons import json_encoder
 from .collections.multiset import Multiset
 from .env.profiles import Profiler
@@ -50,11 +51,10 @@ class CNV:
     def JSON2object(json_string, params=None, flexible=False, paths=False):
         with Profiler("JSON2Object"):
             try:
-                #REMOVE """COMMENTS""", #COMMENTS, //COMMENTS, AND \n \r
+                # REMOVE """COMMENTS""", # COMMENTS, //COMMENTS, AND \n \r
                 if flexible:
-                    #DERIVED FROM https://github.com/jeads/datasource/blob/master/datasource/bases/BaseHub.py#L58
-                    json_string = re.sub(r"\"\"\".*?\"\"\"|[ \t]+//.*\n|^//.*\n|#.*?\n", r"\n", json_string)
-                    json_string = re.sub(r"\n//.*\n", r"\n\n", json_string)
+                    # DERIVED FROM https://github.com/jeads/datasource/blob/master/datasource/bases/BaseHub.py# L58
+                    json_string = re.sub(r"\"\"\".*?\"\"\"|[ \t]+//.*\n|^//.*\n|#.*?\n", r"\n", json_string, flags=re.MULTILINE)
                 if params:
                     params = dict([(k, CNV.value2quote(v)) for k, v in params.items()])
                     json_string = expand_template(json_string, params)
@@ -73,7 +73,7 @@ class CNV:
 
     @staticmethod
     def string2datetime(value, format):
-        ## http://docs.python.org/2/library/datetime.html#strftime-and-strptime-behavior
+        ## http://docs.python.org/2/library/datetime.html# strftime-and-strptime-behavior
         if value == None:
             return None
         try:
@@ -83,10 +83,7 @@ class CNV:
 
     @staticmethod
     def datetime2string(value, format="%Y-%m-%d %H:%M:%S"):
-        try:
-            return value.strftime(format)
-        except Exception, e:
-            Log.error("Can not format {{value}} with {{format}}", {"value": value, "format": format}, e)
+        return Date(value).format(format=format)
 
     @staticmethod
     def datetime2unix(d):
@@ -150,8 +147,8 @@ class CNV:
 
     @staticmethod
     def table2list(
-            column_names, #tuple of columns names
-            rows          #list of tuples
+            column_names, # tuple of columns names
+            rows          # list of tuples
     ):
         return wrap([dict(zip(column_names, r)) for r in rows])
 
@@ -168,7 +165,7 @@ class CNV:
 
         return "\t".join(keys) + "\n" + "\n".join(output)
 
-    #PROPER NULL HANDLING
+    # PROPER NULL HANDLING
     @staticmethod
     def value2string(value):
         if value == None:
@@ -176,7 +173,7 @@ class CNV:
         return unicode(value)
 
 
-    #RETURN PRETTY PYTHON CODE FOR THE SAME
+    # RETURN PRETTY PYTHON CODE FOR THE SAME
     @staticmethod
     def value2quote(value):
         if isinstance(value, basestring):
@@ -199,7 +196,7 @@ class CNV:
 
         return value.replace("\\\\", "\\").replace("\\\"", "\"").replace("\\'", "'").replace("\\\n", "\n").replace("\\\t", "\t")
 
-    #RETURN PYTHON CODE FOR THE SAME
+    # RETURN PYTHON CODE FOR THE SAME
     @staticmethod
     def value2code(value):
         return repr(value)
@@ -270,7 +267,7 @@ class CNV:
         try:
             if isinstance(v, float) and round(v, 0) != v:
                 return v
-                #IF LOOKS LIKE AN INT, RETURN AN INT
+                # IF LOOKS LIKE AN INT, RETURN AN INT
             return int(v)
         except Exception:
             try:

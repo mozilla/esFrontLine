@@ -46,7 +46,7 @@ class Index(object):
             Log.error("something went wrong", e)
 
     def __setitem__(self, key, value):
-        Log.error("Not implemented")
+        raise NotImplementedError
 
 
     def add(self, val):

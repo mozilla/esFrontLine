@@ -35,10 +35,13 @@ if DEBUG_STRANGMAN:
 
 
 def chisquare(f_obs, f_exp):
-    py_result = strangman.stats.chisquare(
-        f_obs,
-        f_exp
-    )
+    try:
+        py_result = strangman.stats.chisquare(
+            f_obs,
+            f_exp
+        )
+    except Exception, e:
+        Log.error("problem with call", e)
 
     if DEBUG_STRANGMAN:
         sp_result = scipy.stats.chisquare(
@@ -236,12 +239,12 @@ class Z_moment(object):
 
     @property
     def tuple(self):
-    #RETURN AS ORDERED TUPLE
+    # RETURN AS ORDERED TUPLE
         return self.S
 
     @property
     def dict(self):
-    #RETURN HASH OF SUMS
+    # RETURN HASH OF SUMS
         return {u"s" + unicode(i): m for i, m in enumerate(self.S)}
 
 
@@ -268,7 +271,7 @@ def sub(a, b):
 
 
 def z_moment2dict(z):
-    #RETURN HASH OF SUMS
+    # RETURN HASH OF SUMS
     return {u"s" + unicode(i): m for i, m in enumerate(z.S)}
 
 
@@ -308,7 +311,7 @@ def median(values, simple=True, mean_weight=0.0):
                 return float(_sorted[middle - 1] + _median) / 2
             return _median
 
-        #FIND RANGE OF THE median
+        # FIND RANGE OF THE median
         start_index = middle - 1
         while start_index > 0 and _sorted[start_index] == _median:
             start_index -= 1

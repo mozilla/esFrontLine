@@ -35,7 +35,7 @@ def encrypt(text, _key, salt=None):
 
     data = bytearray(text.encode("utf8"))
 
-    #Initialize encryption using key and iv
+    # Initialize encryption using key and iv
     key_expander_256 = key_expander.KeyExpander(256)
     expanded_key = key_expander_256.expand(_key)
     aes_cipher_256 = aes_cipher.AESCipher(expanded_key)
@@ -48,7 +48,7 @@ def encrypt(text, _key, salt=None):
     output.length = len(data)
 
     encrypted = bytearray()
-    for i, d in Q.groupby(data, size=16):
+    for _, d in Q.groupby(data, size=16):
         encrypted.extend(aes_cbc_256.encrypt_block(d))
     output.data = CNV.bytearray2base64(encrypted)
     json = CNV.object2JSON(output)
@@ -65,13 +65,13 @@ def decrypt(data, _key):
     """
     ACCEPT JSON OF ENCRYPTED DATA  {"salt":s, "length":l, "data":d}
     """
-    #Key and iv have not been generated or provided, bail out
+    # Key and iv have not been generated or provided, bail out
     if _key is None:
         Log.error("Expecting a key")
 
     _input = CNV.JSON2object(data)
 
-    #Initialize encryption using key and iv
+    # Initialize encryption using key and iv
     key_expander_256 = key_expander.KeyExpander(256)
     expanded_key = key_expander_256.expand(_key)
     aes_cipher_256 = aes_cipher.AESCipher(expanded_key)

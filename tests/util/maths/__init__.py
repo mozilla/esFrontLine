@@ -128,7 +128,7 @@ class Math(object):
         return v - (v % mod)
 
 
-    #RETURN A VALUE CLOSE TO value, BUT WITH SHORTER len(unicode(value))<len(unicode(value)):
+    # RETURN A VALUE CLOSE TO value, BUT WITH SHORTER len(unicode(value))<len(unicode(value)):
     @staticmethod
     def approx_str(value):
         v = unicode(value)
@@ -157,6 +157,18 @@ class Math(object):
             if v == None:
                 continue
             elif output == None or v > output:
+                output = v
+            else:
+                pass
+        return output
+
+    @staticmethod
+    def min(*values):
+        output = None
+        for v in values:
+            if v == None:
+                continue
+            elif output == None or v < output:
                 output = v
             else:
                 pass

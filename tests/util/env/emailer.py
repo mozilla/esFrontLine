@@ -13,7 +13,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
 import sys
-from .. import struct
+from ..structs.wraps import listwrap
 from ..struct import nvl
 
 
@@ -22,9 +22,9 @@ class Emailer:
         """
         REQUIRES SETTINGS LIKE
         "email": {
-            "from_address": "klahnakoski@mozilla.com",  #DEFAULT
-            "to":"klahnakoski@mozilla.com",  #DEFAULT
-            "subject": "catchy title",  #DEFAULT
+            "from_address": "klahnakoski@mozilla.com",  # DEFAULT
+            "to":"klahnakoski@mozilla.com",  # DEFAULT
+            "subject": "catchy title",  # DEFAULT
             "host": "mail.mozilla.com",
             "port": 465,
             "username": "example@example.com",

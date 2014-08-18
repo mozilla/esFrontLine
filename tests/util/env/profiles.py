@@ -49,7 +49,7 @@ class Profiler(object):
             self.end = clock()
             duration = self.end - self.start
 
-            from util.queries.windows import Stats
+            from ..queries.windows import Stats
 
             self.stats.add(duration)
             if self.samples is not None:

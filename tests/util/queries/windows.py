@@ -26,25 +26,26 @@ class AggregationFunction(object):
         """
         RETURN A ZERO-STATE AGGREGATE
         """
-        Log.error("not implemented yet")
+        raise NotImplementedError
 
     def add(self, value):
         """
         ADD value TO AGGREGATE
         """
-        Log.error("not implemented yet")
+        raise NotImplementedError
 
 
     def merge(self, agg):
         """
         ADD TWO AGGREGATES TOGETHER
         """
-        Log.error("not implemented yet")
+        raise NotImplementedError
 
     def end(self):
         """
         RETURN AGGREGATE
         """
+        raise NotImplementedError
 
 
 class Exists(AggregationFunction):
@@ -70,14 +71,14 @@ class WindowFunction(AggregationFunction):
         """
         RETURN A ZERO-STATE AGGREGATE
         """
-        Log.error("not implemented yet")
+        raise NotImplementedError
 
 
     def sub(self, value):
         """
         REMOVE value FROM AGGREGATE
         """
-        Log.error("not implemented yet")
+        raise NotImplementedError
 
 
 def Stats(**kwargs):

@@ -63,22 +63,6 @@ def PRODUCT(*values):
         output *= v
     return output
 
-def SUM(*values):
-    if isinstance(values, tuple) and len(values) == 1 and isinstance(values[0], (list, set, tuple, Multiset, types.GeneratorType)):
-        values = values[0]
-    output = Null
-    for v in values:
-        if v == None:
-            continue
-        if isinstance(v, float) and math.isnan(v):
-            continue
-        if output == None:
-            output = v
-            continue
-        output += v
-    return output
-
-
 def COUNT(*values):
     if isinstance(values, tuple) and len(values) == 1 and isinstance(values[0], (list, set, tuple, Multiset, types.GeneratorType)):
         values = values[0]

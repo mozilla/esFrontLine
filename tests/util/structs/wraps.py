@@ -106,17 +106,17 @@ def listwrap(value):
     value -> [value]
     [...] -> [...]  (unchanged list)
 
-    #BEFORE
+    # BEFORE
     if a is not None:
         if not isinstance(a, list):
             a=[a]
         for x in a:
-            #do something
+            # do something
 
 
-    #AFTER
+    # AFTER
     for x in listwrap(a):
-        #do something
+        # do something
 
     """
     if value == None:

@@ -1,13 +1,13 @@
 # encoding: utf-8
 #
-from .util import struct
-from .util.cnv import CNV
-from .util.env.elasticsearch import ElasticSearch
-from .util.env.logs import Log
-from .util.env.files import File
-from .util.queries import Q
-from .util.struct import Struct
-from .util.structs.wraps import unwrap, wrap
+from .. import struct
+from ..cnv import CNV
+from ..env.elasticsearch import ElasticSearch
+from ..env.logs import Log
+from ..env.files import File
+from ..queries import Q
+from ..struct import Struct
+from ..structs.wraps import unwrap, wrap
 
 def make_test_instance(name, settings):
     if settings.filename:
