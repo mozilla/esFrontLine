@@ -2,10 +2,12 @@ from _subprocess import CREATE_NEW_PROCESS_GROUP
 import subprocess
 import requests
 import signal
-import test_slow_server
-from test_slow_server import test_slow_server
-from util.logs import Log
-from util.threads import Thread, Signal
+from util.env.logs import Log
+from util.thread.threads import Signal, Thread
+from test_slow_server import test_slow_streaming
+
+WHITELISTED = "public_bugs"  # ENSURE THIS IS IN THE test_settings.json WHITELIST
+NOT_WHITELISTED = "bug_hierarchy"
 
 
 def test_943465(url):
@@ -21,14 +23,14 @@ def test_943465(url):
 
 def test_943472(url):
     #https://bugzilla.mozilla.org/show_bug.cgi?id=943472
-    response = request("GET", url + "/bugs/_stats/")
+    response = request("GET", url + "/" + WHITELISTED + "/_stats/")
     if response.status_code != 400:
         Log.error("should not allow")
 
 
 def test_943478(url):
     #https://bugzilla.mozilla.org/show_bug.cgi?id=943478
-    response = request("POST", url + "/telemetry_agg_valid_201302/_search", data="""
+    response = request("POST", url + "/" + NOT_WHITELISTED + "/_search", data="""
     {
     	"query":{"filtered":{
     		"query":{"match_all":{}}
@@ -42,7 +44,7 @@ def test_943478(url):
         Log.error("should not allow")
 
     # VERIFY ALLOWED INDEX GETS THROUGH
-    response = request("POST", url + "/bugs/_search", data="""
+    response = request("POST", url + "/" + WHITELISTED + "/_search", data="""
     {
     	"query":{"filtered":{
     		"query":{"match_all":{}},
@@ -60,11 +62,25 @@ def test_943478(url):
 def test_allow_3path_mapping(url):
     #WE SHOULD ALLOW -mapping WITH INDEX AND TYPE IN PATH
     #http://klahnakoski-es.corp.tor1.mozilla.com:9204/bugs/bug_version/_mapping
-    response = request("GET", url + "/bugs/bug_version/_mapping")
+    response = request("GET", url + "/" + WHITELISTED + "/bug_version/_mapping")
     if response.status_code != 200:
         Log.error("should be allowed")
 
 
+def test_allow_head_request(url):
+    #WE SHOULD ALLOW HEAD REQUESTS TO /
+    response = request("HEAD", url + "/")
+    if response.status_code != 200:
+        Log.error("should be allowed")
+
+    response = request("HEAD", url)
+    if response.status_code != 200:
+        Log.error("should be allowed")
+
+    # ENVEN HEAD REQUESTS TO WHITELISTED INDEXES WILL BE DENIED
+    response = request("HEAD", url + "/" + WHITELISTED + "/bug_version/_mapping")
+    if response.status_code == 200:
+        Log.error("should NOT be allowed")
 
 
 def request(type, url, data=None, **kwargs):
@@ -107,11 +123,14 @@ def run_app(please_stop):
 
 
 def all_tests(url):
-    # test_943465(url)
-    # test_943472(url)
-    # test_943478(url)
-    # test_allow_3path_mapping(url)
-    test_slow_server()
+    test_allow_head_request(url)
+    test_943465(url)
+    test_943472(url)
+    test_943478(url)
+    test_allow_3path_mapping(url)
+
+    test_slow_streaming()
+
     Log.note("ALL TESTS PASS")
 
 

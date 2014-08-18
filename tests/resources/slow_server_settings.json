@@ -10,7 +10,7 @@
             "threaded":true,
             "processes":1
         },
-        "whitelist":["bugs"],
+        "whitelist":["public_bugs"],
         "debug":{
             "log":[{
                 "filename": "./tests/results/logs/test_slow_server.log",
