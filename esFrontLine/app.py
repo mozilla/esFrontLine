@@ -22,6 +22,11 @@ from werkzeug.exceptions import abort
 from auth import HawkAuth, AuthException
 import sys  # REQUIRED FOR DYNAMIC DEBUG
 
+settings = {}
+
+logger = logging.getLogger('esFrontLine')
+logger.setLevel(logging.DEBUG)
+
 app = Flask(__name__)
 auth = HawkAuth()
 
@@ -211,8 +216,6 @@ class WSGICopyBody(object):
 
 app.wsgi_app = WSGICopyBody(app.wsgi_app)
 
-logger = None
-settings = {}
 
 
 def main():
@@ -237,8 +240,6 @@ def main():
         settings["args"] = args
         settings["whitelist"] = listwrap(settings.get("whitelist", None))
 
-        globals()["logger"] = logging.getLogger('esFrontLine')
-        logger.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
         for d in listwrap(settings["debug"]["log"]):

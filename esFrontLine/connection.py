@@ -13,7 +13,7 @@ class HawkConnection(Urllib3HttpConnection):
 
         # Save credentials
         assert isinstance(hawk_credentials, dict), 'hawk_credentials should be a dict'
-        assert hawk_credentials.keys() == ['algorithm', 'id', 'key'], \
+        assert {'algorithm', 'id', 'key'}.symmetric_difference(hawk_credentials.keys()) == set(), \
             'hawk_credentials can only contains algorithm, id, key.'
         self._hawk_credentials = hawk_credentials
 
