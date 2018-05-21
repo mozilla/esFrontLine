@@ -52,29 +52,15 @@ class Except(Exception):
     def message(self):
         return self._message
 
-@app.route('/', defaults={'path': ''}, methods=['HEAD'])
-@app.route('/<path:path>', methods=['HEAD'])
-def catch_all_head(path):
-    return catch_all(path, "HEAD")
-
-@app.route('/', defaults={'path': ''}, methods=['GET'])
-@app.route('/<path:path>', methods=['GET'])
-def catch_all_get(path):
-    return catch_all(path, "get")
-
-
-@app.route('/', defaults={'path': ''}, methods=['POST'])
-@app.route('/<path:path>', methods=['POST'])
-def catch_all_post(path):
-    return catch_all(path, 'post')
-
-def catch_all(path, type):
+@app.route('/', defaults={'path': ''}, methods=['GET', 'HEAD', 'POST'])
+@app.route('/<path:path>', methods=['GET', 'HEAD', 'POST'])
+def catch_all(path):
     try:
         # Check HAWK authentication before processing request
         user_id = auth.check_user(flask.request)
 
         data = flask.request.environ['body_copy']
-        resource = filter(type, path, data)
+        resource = filter(flask.request.method, path, data)
 
         # Check resource is allowed for current user
         auth.check_resource(user_id, resource)
@@ -87,7 +73,7 @@ def catch_all(path, type):
         headers['content-type'] = 'application/json'
 
         response = requests.request(
-            type,
+            flask.request.method,
             es["host"] + ":" + str(es["port"]) + "/" + path,
             data=data,
             stream=True,  # FOR STREAMING
@@ -111,7 +97,7 @@ def catch_all(path, type):
         }
         try:
             requests.request(
-                type,
+                flask.request.method,
                 es["host"] + ":" + str(es["port"]) + "/debug/esfrontline/"+str(uid),
                 data=json.dumps(slim_request),
                 timeout=5
@@ -145,12 +131,12 @@ def catch_all(path, type):
         abort(400)
 
 
-def filter(type, path_string, query):
+def filter(method, path_string, query):
     """
     THROW EXCEPTION IF THIS IS NOT AN ElasticSearch QUERY
     """
     try:
-        if type.upper() == "HEAD":
+        if method.upper() == "HEAD":
             if path_string in ["", "/"]:
                 return  # HEAD REQUESTS ARE ALLOWED
             else:
