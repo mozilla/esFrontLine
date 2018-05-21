@@ -71,10 +71,10 @@ def catch_all_post(path):
 def catch_all(path, type):
     try:
         data = flask.request.environ['body_copy']
-        filter(type, path, data)
+        resource = filter(type, path, data)
 
         # Check HAWK authentication before processing request
-        auth.check(flask.request)
+        auth.check(flask.request, resource)
 
         #PICK RANDOM ES
         es = random.choice(listwrap(settings["elasticsearch"]))
@@ -183,6 +183,8 @@ def filter(type, path_string, query):
     except Exception as e:
         logger.warning(e.message)
         raise Except("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
+
+    return path[0]
 
 
 # Snagged from http://stackoverflow.com/questions/10999990/python-flask-how-to-get-whole-raw-post-body

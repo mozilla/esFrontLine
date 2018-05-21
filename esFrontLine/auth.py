@@ -24,6 +24,9 @@ class HawkAuth(object):
         '''
         Load users from settings file, and validates their inner structure
         '''
+        if not isinstance(users, list) or not len(users):
+            return
+
         def _valid_user(user):
             # Check each user structure from settings
             hawk = user.get('hawk')
@@ -40,11 +43,13 @@ class HawkAuth(object):
             logger.debug('Validated user {id}'.format(**user['hawk']))
             return user
 
-        if isinstance(users, list) and len(users) > 0:
-            self.users = list(filter(_valid_user, users))
-            logger.info('Loaded {} users'.format(len(self.users)))
+        self.users = {
+            user['hawk']['id']: user
+            for user in filter(_valid_user, users)
+        }
+        logger.info('Loaded {} users'.format(len(self.users)))
 
-    def check(self, request):
+    def check(self, request, resource):
         '''
         Check HAWK authentication before processing the request
         '''
@@ -55,8 +60,9 @@ class HawkAuth(object):
         if 'Authorization' not in request.headers:
             raise AuthException('Missing Auth header')
 
+        # Check the hawk
         try:
-            Receiver(
+            receiver = Receiver(
                 self.lookup_user,
                 request.headers['Authorization'],
                 request.url,
@@ -68,15 +74,20 @@ class HawkAuth(object):
         except Exception as e:
             raise AuthException(str(e))
 
+        # Check the resource is allowed by comparing with resources for the user
+        user = self.users[receiver.parsed_header['id']]
+        if resource not in user['resources']:
+            raise AuthException('Resource {} not accessible for this user'.format(resource))
+
         return True
 
     def lookup_user(self, sender_id):
         '''
-        Find user in local users list
+        Find user HAWK credentials in local users dict
         '''
         try:
-            return next(u['hawk'] for u in self.users if u['hawk']['id'] == sender_id)
-        except StopIteration:
+            return self.users[sender_id]['hawk']
+        except KeyError:
             raise LookupError
 
     def build_nonce(self, sender_id, nonce, timestamp):
