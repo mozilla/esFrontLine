@@ -58,6 +58,7 @@ def catch_all(path):
     try:
         # Check HAWK authentication before processing request
         user_id = auth.check_user(flask.request)
+        logger.info('Authenticated user {}'.format(user_id))
 
         data = flask.request.environ['body_copy']
         resource = filter(flask.request.method, path, data)
@@ -147,11 +148,12 @@ def filter(method, path_string, query):
         ## EXPECTING {index_name} "/" {type_name} "/" {_id}
         ## EXPECTING {index_name} "/" {type_name} "/_search"
         ## EXPECTING {index_name} "/_search"
+        es_methods = ["_mapping", "_search", "_count"]
         if len(path) == 2:
-            if path[-1] not in ["_mapping", "_search"]:
+            if path[-1] not in es_methods:
                 raise Except("request path must end with _mapping or _search")
         elif len(path) == 3:
-            if path[-1] not in ["_mapping", "_search"]:
+            if path[-1] not in es_methods:
                 raise Except("request path must end with _mapping or _search")
         else:
             raise Except('request must be of form: {index_name} "/" {type_name} "/_search" ')
