@@ -49,7 +49,7 @@ class HawkAuth(object):
         }
         logger.info('Loaded {} users'.format(len(self.users)))
 
-    def check(self, request, resource):
+    def check_user(self, request):
         '''
         Check HAWK authentication before processing the request
         '''
@@ -74,8 +74,19 @@ class HawkAuth(object):
         except Exception as e:
             raise AuthException(str(e))
 
-        # Check the resource is allowed by comparing with resources for the user
-        user = self.users[receiver.parsed_header['id']]
+        return receiver.parsed_header['id']
+
+    def check_resource(self, user_id, resource):
+        '''
+        Check the resource is allowed by comparing with resources for the user
+        '''
+        if not self.users:
+            logger.info('Authentication disabled')
+            return
+
+        user = self.users.get(user_id)
+        if user is None:
+            raise AuthException('Invalid user {}'.format(user_id))
         if resource not in user['resources']:
             raise AuthException('Resource {} not accessible for this user'.format(resource))
 

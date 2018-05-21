@@ -70,11 +70,14 @@ def catch_all_post(path):
 
 def catch_all(path, type):
     try:
+        # Check HAWK authentication before processing request
+        user_id = auth.check_user(flask.request)
+
         data = flask.request.environ['body_copy']
         resource = filter(type, path, data)
 
-        # Check HAWK authentication before processing request
-        auth.check(flask.request, resource)
+        # Check resource is allowed for current user
+        auth.check_resource(user_id, resource)
 
         #PICK RANDOM ES
         es = random.choice(listwrap(settings["elasticsearch"]))
