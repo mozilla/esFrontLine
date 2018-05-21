@@ -64,7 +64,8 @@ def catch_all(path):
         resource = filter(flask.request.method, path, data)
 
         # Check resource is allowed for current user
-        auth.check_resource(user_id, resource)
+        if flask.request.method != 'HEAD':
+            auth.check_resource(user_id, resource)
 
         #PICK RANDOM ES
         es = random.choice(listwrap(settings["elasticsearch"]))
