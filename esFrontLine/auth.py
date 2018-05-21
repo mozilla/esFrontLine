@@ -27,26 +27,24 @@ class HawkAuth(object):
         if not isinstance(users, list) or not len(users):
             return
 
-        def _valid_user(user):
-            # Check each user structure from settings
-            hawk = user.get('hawk')
-            resources = user.get('resources')
-            if hawk is None or resources is None:
-                return False
+        self.users = {}
+        for index, user in enumerate(users):
+            try:
+                hawk = user.get('hawk')
+                resources = user.get('resources')
+                assert hawk is not None, 'Missing "hawk" setting in user config.'
+                assert resources is not None, 'Missing "resources" setting in user config.'
+                assert isinstance(resources, list), '"resources" must be JSON list'
+                assert len(resources) > 0, '"resources" cannot be empty'
+                assert isinstance(hawk, dict), '"hawk" must be a JSON dictionary'
+                assert hawk.keys() == ['algorithm', 'id', 'key'], \
+                    '"hawk" can only contains algorithm, id, key.'
 
-            if not isinstance(resources, list) or not isinstance(hawk, dict):
-                return False
+                self.users[user['hawk']['id']] = user
+                logger.debug('Validated user {id}'.format(**user['hawk']))
+            except AssertionError as e:
+                raise Exception('Error on user #{}: {}'.format(index+1, e))
 
-            if hawk.keys() != ['algorithm', 'id', 'key']:
-                return False
-
-            logger.debug('Validated user {id}'.format(**user['hawk']))
-            return user
-
-        self.users = {
-            user['hawk']['id']: user
-            for user in filter(_valid_user, users)
-        }
         logger.info('Loaded {} users'.format(len(self.users)))
 
     def check_user(self, request):
