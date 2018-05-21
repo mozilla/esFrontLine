@@ -11,3 +11,5 @@ dist
 *.egg-info
 projectFilesBackup
 results
+/logs
+/temp
