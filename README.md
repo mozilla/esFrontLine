@@ -35,6 +35,8 @@ You must write your own setting.json file with the following properties set:
 
   * **whitelist** - list of indexes that are allowed
 
+  * **users** - list of allowed HAWK users, with their linked resources
+
 Here is an example of my ```settings.json``` file
 
     {
@@ -58,6 +60,18 @@ Here is an example of my ```settings.json``` file
             "threaded":true,
             "processes":1
         },
+        "users": [
+          {
+            "hawk": {
+              "id": "kyle@example.com",
+              "key": "secret",
+              "algorithm": "sha256"
+            },
+            "resources": [
+              "testing"
+            ]
+          }
+        ],
         "whitelist":["bugs", "org_chart", "bug_summary", "reviews"],
         "debug":{
             "log":[{

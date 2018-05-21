@@ -19,9 +19,11 @@ import requests
 import time
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
+from auth import HawkAuth, AuthException
 import sys  # REQUIRED FOR DYNAMIC DEBUG
 
 app = Flask(__name__)
+auth = HawkAuth()
 
 
 def stream(raw_response):
@@ -50,7 +52,6 @@ class Except(Exception):
     def message(self):
         return self._message
 
-
 @app.route('/', defaults={'path': ''}, methods=['HEAD'])
 @app.route('/<path:path>', methods=['HEAD'])
 def catch_all_head(path):
@@ -67,11 +68,13 @@ def catch_all_get(path):
 def catch_all_post(path):
     return catch_all(path, 'post')
 
-
 def catch_all(path, type):
     try:
         data = flask.request.environ['body_copy']
         filter(type, path, data)
+
+        # Check HAWK authentication before processing request
+        auth.check(flask.request)
 
         #PICK RANDOM ES
         es = random.choice(listwrap(settings["elasticsearch"]))
@@ -110,7 +113,7 @@ def catch_all(path, type):
                 data=json.dumps(slim_request),
                 timeout=5
             )
-        except Exception, e:
+        except Exception as e:
             pass
 
         logger.debug("path: {path}, request bytes={request_content_length}, response bytes={response_content_length}".format(
@@ -128,10 +131,13 @@ def catch_all(path, type):
             status=response.status_code,
             headers=outbound_header
         )
-    except Except, e:
+    except Except as e:
         logger.warning(e.message)
         abort(400)
-    except Exception, e:
+    except AuthException as e:
+        logger.exception(str(e))
+        abort(403)
+    except Exception as e:
         logger.exception(str(e))
         abort(400)
 
@@ -174,7 +180,7 @@ def filter(type, path_string, query):
         if path[-1] == "_mapping" and len(query) > 0:
             raise Except("Can not provide content when requesting _mapping")
 
-    except Exception, e:
+    except Exception as e:
         logger.warning(e.message)
         raise Except("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
 
@@ -253,9 +259,12 @@ def main():
                 ch.setFormatter(formatter)
                 logger.addHandler(ch)
 
+        # Setup auth users
+        auth.load_users(settings.get('users'))
+
         HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
         app.run(**settings["flask"])
-    except Exception, e:
+    except Exception as e:
         print(str(e))
 
 
