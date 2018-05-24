@@ -1,31 +1,18 @@
-    {
-        "elasticsearch":[{
-            "host":"http://elasticsearch1.bugs.scl3.mozilla.com",
-            "port":9200
-        },{
-            "host":"http://elasticsearch2.bugs.scl3.mozilla.com",
-            "port":9200
-        },{
-            "host":"http://elasticsearch3.bugs.scl3.mozilla.com",
-            "port":9200
-        }],
-        "flask":{
-            "host":"0.0.0.0",
-            "port":9292,
-            "debug":false,
-            "threaded":true,
-            "processes":1
-        },
-        "whitelist":["public_bugs"],
-        "debug":{
-            "log":[{
-                "filename": "./tests/results/logs/app.log",
-                "maxBytes": 10000000,
-                "backupCount": 200,
-                "encoding": "utf8"
-            },{
-                "stream":"sys.stdout"
-            }]
-        }
-
+{
+    "elasticsearch": {
+        "host": "http://localhost",
+        "port": 9200
+    },
+    "flask": {
+        "host": "0.0.0.0",
+        "port": 9292,
+        "debug": false,
+        "threaded": true,
+        "processes": 1
+    },
+    "whitelist": ["public_bugs"],
+    "debug": {
+        "trace": true,
+        "log": [{"stream": "sys.stdout"}]
     }
+}

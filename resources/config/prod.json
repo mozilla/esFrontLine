@@ -10,8 +10,9 @@
         "threaded": true,
         "processes": 1
     },
-    "$ref":"~/private.json#esFrontLine",
+    "$ref": "~/private.json#esFrontLine",
     "debug": {
+        "trace": true,
         "log": [
             {
                 "stream": "sys.stdout"

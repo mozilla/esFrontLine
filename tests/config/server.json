@@ -25,6 +25,7 @@
     "whitelist": ["repo"],
     "constants": {"esFrontLine.app.DEBUG": true},
     "debug": {
+        "trace": true,
         "log": [
             {
                 "filename": "./results/logs/app.log",

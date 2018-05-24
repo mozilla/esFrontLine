@@ -1,25 +1,27 @@
-    {
-        "elasticsearch":{
-            "host":"http://localhost",
-            "port":9299
-        },
-        "flask":{
-            "host":"0.0.0.0",
-            "port":9298,
-            "debug":false,
-            "threaded":true,
-            "processes":1
-        },
-        "whitelist":["public_bugs"],
-        "debug":{
-            "log":[{
+{
+    "elasticsearch": {
+        "host": "http://localhost",
+        "port": 9299
+    },
+    "flask": {
+        "host": "0.0.0.0",
+        "port": 9298,
+        "debug": false,
+        "threaded": true,
+        "processes": 1
+    },
+    "whitelist": ["public_bugs"],
+    "debug": {
+        "trace": true,
+        "log": [
+            {
                 "filename": "./tests/results/logs/test_slow_server.log",
                 "maxBytes": 10000000,
                 "backupCount": 200,
                 "encoding": "utf8"
-            },{
-                "stream":"sys.stdout"
-            }]
-        }
-
+            }, {
+                "stream": "sys.stdout"
+            }
+        ]
     }
+}

@@ -1,18 +1,18 @@
 {
     "elasticsearch": "http://localhost:5100",
-    "user":
-        {
-            "hawk": {
-                "id": "kyle@example.com",
-                "key": "secret",
-                "algorithm": "sha256"
-            },
-            "resources": [
-                "testing"
-            ]
+    "user": {
+        "hawk": {
+            "id": "kyle@example.com",
+            "key": "secret",
+            "algorithm": "sha256"
         },
+        "resources": [
+            "testing"
+        ]
+    },
     "tables": ["repo"],
     "debug": {
+        "trace": true,
         "log": [
             {
                 "filename": "./results/logs/client.log",
