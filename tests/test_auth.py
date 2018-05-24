@@ -62,6 +62,14 @@ class TestAuthentication(unittest.TestCase):
             mock_es,
             body='{}',
             content_type='application/json',
+            status=400
+        )
+        responses.add(
+            responses.GET,
+            mock_es,
+            body='{"query":{}}',
+            content_type='application/json',
+            status=200
         )
         responses.add(
             responses.HEAD,
@@ -133,7 +141,7 @@ class TestAuthentication(unittest.TestCase):
             auth.load_users([{
                 'user': 'test',
             }])
-        self.assertEqual(e.exception.message, 'Error on user #1: Missing "hawk" setting in user config.')
+        self.assertIn('Missing "hawk" setting in user config.', e.exception)
         self.assertEqual(len(auth.users), 0)
 
         # Missing resources
@@ -141,7 +149,7 @@ class TestAuthentication(unittest.TestCase):
             auth.load_users([{
                 'hawk': 'test',
             }])
-        self.assertEqual(e.exception.message, 'Error on user #1: Missing "resources" setting in user config.')
+        self.assertIn('Missing "resources" setting in user config.', e.exception)
         self.assertEqual(len(auth.users), 0)
 
         # Resources not a list
@@ -150,7 +158,7 @@ class TestAuthentication(unittest.TestCase):
                 'hawk': 'test',
                 'resources': 'test',
             }])
-        self.assertEqual(e.exception.message, 'Error on user #1: "resources" must be JSON list')
+        self.assertIn('"resources" must be JSON list', e.exception)
         self.assertEqual(len(auth.users), 0)
 
         # hawk not a dict
@@ -159,7 +167,7 @@ class TestAuthentication(unittest.TestCase):
                 'hawk': 'test',
                 'resources': ['test'],
             }])
-        self.assertEqual(e.exception.message, 'Error on user #1: "hawk" must be a JSON dictionary')
+        self.assertIn('"hawk" must be a JSON dictionary', e.exception)
         self.assertEqual(len(auth.users), 0)
 
         # Invalid hawk
@@ -168,7 +176,7 @@ class TestAuthentication(unittest.TestCase):
                 'hawk': {},
                 'resources': ['test'],
             }])
-        self.assertEqual(e.exception.message, 'Error on user #1: "hawk" can only contains algorithm, id, key.')
+        self.assertIn('"hawk" can only contains algorithm, id, key.', e.exception)
         self.assertEqual(len(auth.users), 0)
 
         # Valid hawk

@@ -43,7 +43,7 @@ def catch_all(path):
     try:
         # Check HAWK authentication before processing request
         user_id = auth.check_user(flask.request)
-        Log.note('Authenticated user {user}', user=user_id)
+        Log.note('Authenticated user {{user}}', user=user_id)
 
         data = flask.request.environ['body_copy']
         resource = filter(flask.request.method, path, data)
