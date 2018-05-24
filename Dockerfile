@@ -1,7 +1,7 @@
 FROM python:2.7-alpine
 
 ADD . /frontline
-COPY docker/frontline.json /etc/frontline.json
+COPY tests/docker/frontline.json /etc/frontline.json
 
 RUN pip install /frontline
 

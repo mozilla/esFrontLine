@@ -14,7 +14,7 @@ services:
 
   frontline:
     container_name: frontline-app
-    build: ..
+    build: ../..
 
     depends_on:
       - elasticsearch
