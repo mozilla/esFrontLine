@@ -51,7 +51,7 @@ def serve_slowly(path):
         yield CNV.unicode2utf8(u"1 bottle of beer on the wall! 1 bottle of beer!  Take one down, pass it around! 0 bottles of beer on he wall.\n")
 
     try:
-        ## FORWARD RESPONSE
+        # FORWARD RESPONSE
         return Response(
             octoberfest(),
             direct_passthrough=True, #FOR STREAMING
