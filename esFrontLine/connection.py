@@ -32,10 +32,10 @@ class HawkConnection(Urllib3HttpConnection):
         Build a new HAWK header on each request
         '''
         # Build full url as in Urllib3HttpConnection
-        url = self.url_prefix + url
+        local_url = self.url_prefix + url
         if params:
-            url = '%s?%s' % (url, urlencode(params))
-        full_url = self.host + url
+            local_url = '%s?%s' % (url, urlencode(params))
+        full_url = self.host + local_url
 
         # Get content type from both headers source
         if headers and 'content-type' in headers:
