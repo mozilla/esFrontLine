@@ -10,6 +10,7 @@
         "threaded": true,
         "processes": 1
     },
+    "url_prefix": "/elasticsearch",
     "$ref": "~/private.json#esFrontLine",
     "debug": {
         "trace": true,

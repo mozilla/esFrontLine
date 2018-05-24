@@ -27,14 +27,14 @@ def serve_slowly(path):
             Log.note("emit {{i}}", i=bb)
             yield (b"0" * 65535) + b"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
             Till(seconds=1.0 / RATE).wait()
-            yield unicode2utf8(expand_template("{{num}} bottles of beer on the wall! {{num}} bottles of beer!  Take one down, pass it around! {{less}} bottles of beer on he wall!\n", {
+            yield unicode2utf8(expand_template("{{num}} bottles of beer on the wall! {{num}} bottles of beer!  Take one down, pass it around! {{less}} bottles of beer on the wall!\n", {
                 "num": bb,
                 "less": bb - 1
             }))
         yield (b"0" * 65535) + b"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
-        yield unicode2utf8(u"2 bottles of beer on the wall! 2 bottles of beer!  Take one down, pass it around! 1 bottle of beer on he wall!\n")
+        yield unicode2utf8(u"2 bottles of beer on the wall! 2 bottles of beer!  Take one down, pass it around! 1 bottle of beer on the wall!\n")
         yield (b"0" * 65535) + b"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
-        yield unicode2utf8(u"1 bottle of beer on the wall! 1 bottle of beer!  Take one down, pass it around! 0 bottles of beer on he wall.\n")
+        yield unicode2utf8(u"1 bottle of beer on the wall! 1 bottle of beer!  Take one down, pass it around! 0 bottles of beer on the wall.\n")
 
     try:
         # FORWARD RESPONSE
