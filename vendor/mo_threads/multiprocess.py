@@ -68,7 +68,7 @@ class Process(object):
         self.join(raise_on_error=True)
 
     def stop(self):
-        self.stdin.add("exit")  # ONE MORE SEND
+        self.stdin.add(THREAD_STOP)  # ONE MORE SEND
         self.please_stop.go()
 
     def join(self, raise_on_error=False):

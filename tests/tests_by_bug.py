@@ -70,8 +70,8 @@ class TestByBug(unittest.TestCase):
             Log.error("query should work")
 
     def test_allow_3path_mapping(self):
-        #WE SHOULD ALLOW -mapping WITH INDEX AND TYPE IN PATH
-        #http://klahnakoski-es.corp.tor1.mozilla.com:9204/bugs/bug_version/_mapping
+        # WE SHOULD ALLOW -mapping WITH INDEX AND TYPE IN PATH
+        # http://klahnakoski-es.corp.tor1.mozilla.com:9204/bugs/bug_version/_mapping
         response = request("GET", url + "/" + WHITELISTED + "/bug_version/_mapping")
         if response.status_code != 200:
             Log.error("should be allowed")
@@ -118,7 +118,7 @@ def run_app(please_stop):
     )
 
     while not please_stop:
-        line = proc.stderr.readline().decode('utf8')
+        line = proc.stderr.pop().decode('utf8')
         if not line:
             continue
         if " * Running on" in line:
