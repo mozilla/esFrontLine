@@ -1,0 +1,36 @@
+---
+version: "3.2"
+services:
+
+  nginx:
+    container_name: frontline-proxy
+    build: nginx
+
+    ports:
+      - 8000:80
+
+    depends_on:
+      - frontline
+
+  frontline:
+    container_name: frontline-app
+    build: ..
+
+    depends_on:
+      - elasticsearch
+
+  elasticsearch:
+    container_name: frontline-es
+    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.0
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      # X-Pack is installed in this image
+      # but we don't need security in dev
+      - xpack.security.enabled=false
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+
+volumes:
+  esdata:
+    driver: local
