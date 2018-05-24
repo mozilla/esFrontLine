@@ -4,13 +4,18 @@ import json
 import argparse
 
 
-def main(settings):
+def main(settings, port=None):
 
     # Load flask config
     flask = settings.get('flask')
+    if port is not None:
+        flask['port'] = port
     assert flask and 'host' in flask and 'port' in flask, \
         'Invalid flask settings'
-    server_url = 'http://{host}:{port}'.format(**flask)
+    server_url = 'http://{host}:{port}{prefix}'.format(
+        prefix=settings.get('url_prefix', ''),
+        **flask
+    )
     print('Will connect to esfrontline: {}'.format(server_url))
 
     # Load users config
@@ -51,6 +56,12 @@ if __name__ == '__main__':
         type=open,
         dest='settings',
     )
+    parser.add_argument(
+        '--port',
+        help='Use a different network port',
+        type=int,
+        dest='port',
+    )
     args = parser.parse_args()
 
-    main(json.load(args.settings))
+    main(json.load(args.settings), args.port)

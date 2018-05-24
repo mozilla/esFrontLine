@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 
 import random
 import time
+import re
 
 import flask
 import requests
@@ -45,8 +46,17 @@ def catch_all(path):
         user_id = auth.check_user(flask.request)
         Log.note('Authenticated user {{user}}', user=user_id)
 
+        # Remove prefix from url to reach ES
+        url_prefix = settings.get('url_prefix')
+        if url_prefix:
+            assert url_prefix.startswith('/'), '"url_prefix" must start with a /'
+            assert not url_prefix.endswith('/'), '"url_prefix" must not end with a /'
+            es_path = re.sub(r'^{}/'.format(url_prefix[1:]), '', path)
+        else:
+            es_path = path
+
         data = flask.request.environ['body_copy']
-        resource = filter(flask.request.method, path, data)
+        resource = filter(flask.request.method, es_path, data)
 
         # Check resource is allowed for current user
         if flask.request.method != 'HEAD':
@@ -61,7 +71,7 @@ def catch_all(path):
 
         response = requests.request(
             flask.request.method,
-            es["host"] + ":" + str(es["port"]) + "/" + path,
+            es["host"] + ":" + str(es["port"]) + "/" + es_path,
             data=data,
             stream=True,  # FOR STREAMING
             headers=headers,
