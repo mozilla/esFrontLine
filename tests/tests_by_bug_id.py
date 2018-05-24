@@ -1,9 +1,7 @@
-from _subprocess import CREATE_NEW_PROCESS_GROUP
-import subprocess
 import requests
-import signal
-from util.env.logs import Log
-from util.thread.threads import Signal, Thread
+
+from mo_logs import Log
+from mo_threads import Signal, Process, Thread
 from test_slow_server import test_slow_streaming
 
 WHITELISTED = "public_bugs"  # ENSURE THIS IS IN THE test_settings.json WHITELIST
@@ -102,13 +100,10 @@ server_is_ready = Signal()
 
 
 def run_app(please_stop):
-    proc = subprocess.Popen(
+    proc = Process(
+        "app",
         ["python", "esFrontLine\\app.py", "--settings", "tests/resources/test_settings.json"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        bufsize=-1,
-        creationflags=CREATE_NEW_PROCESS_GROUP
+        debug=True
     )
 
     while not please_stop:
@@ -119,7 +114,8 @@ def run_app(please_stop):
             server_is_ready.go()
         Log.note("SERVER: {{line}}", {"line": line.strip()})
 
-    proc.send_signal(signal.CTRL_C_EVENT)
+    proc.stop()
+    proc.join()
 
 
 def all_tests(url):
@@ -139,7 +135,7 @@ def main():
     thread = Thread.run("run app", run_app)
 
     try:
-        server_is_ready.wait_for_go()
+        server_is_ready.wait()()
         all_tests(url)
     finally:
         thread.please_stop.go()

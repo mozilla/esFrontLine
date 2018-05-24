@@ -7,20 +7,16 @@
 #
 # Author: Kyle Lahnakoski (kyle@lahnakoski.com)
 #
-from _subprocess import CREATE_NEW_PROCESS_GROUP
-import subprocess
-
-from flask import Flask, Response
-import flask
-import signal
 import time
+
 import requests
+from flask import Flask, Response
 from werkzeug.exceptions import abort
+
 from esFrontLine.app import stream
-from util.cnv import CNV
-from util.env.logs import Log
-from util.strings import expand_template
-from util.thread.threads import Thread, Signal
+from mo_logs import Log
+from mo_logs.strings import expand_template, unicode2utf8
+from mo_threads import Signal, Thread, Till, Process
 
 app = Flask(__name__)
 
@@ -40,15 +36,15 @@ def serve_slowly(path):
     def octoberfest():
         for bb in range(99, 2, -1):
             yield ("0"*65535)+"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
-            Thread.sleep(1.0/RATE)
-            yield CNV.unicode2utf8(expand_template("{{num}} bottles of beer on the wall! {{num}} bottles of beer!  Take one down, pass it around! {{less}} bottles of beer on he wall!\n", {
+            Till(seconds=1.0/RATE).wait()
+            yield unicode2utf8(expand_template("{{num}} bottles of beer on the wall! {{num}} bottles of beer!  Take one down, pass it around! {{less}} bottles of beer on he wall!\n", {
                 "num": bb,
                 "less": bb - 1
             }))
         yield ("0"*65535)+"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
-        yield CNV.unicode2utf8(u"2 bottles of beer on the wall! 2 bottles of beer!  Take one down, pass it around! 1 bottle of beer on he wall!\n")
+        yield unicode2utf8(u"2 bottles of beer on the wall! 2 bottles of beer!  Take one down, pass it around! 1 bottle of beer on he wall!\n")
         yield ("0"*65535)+"\n"  # ENOUGH TO FILL THE INCOMING BUFFER
-        yield CNV.unicode2utf8(u"1 bottle of beer on the wall! 1 bottle of beer!  Take one down, pass it around! 0 bottles of beer on he wall.\n")
+        yield unicode2utf8(u"1 bottle of beer on the wall! 1 bottle of beer!  Take one down, pass it around! 0 bottles of beer on he wall.\n")
 
     try:
         # FORWARD RESPONSE
@@ -57,18 +53,15 @@ def serve_slowly(path):
             direct_passthrough=True, #FOR STREAMING
             status=200
         )
-    except Exception, e:
+    except Exception as e:
         abort(400)
 
 
 def run_slow_server(please_stop):
-    proc = subprocess.Popen(
+    proc = Process(
+        "slow server",
         ["python", "tests\\test_slow_server.py"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        bufsize=-1,
-        creationflags=CREATE_NEW_PROCESS_GROUP
+        debug=True
     )
 
     while not please_stop:
@@ -79,17 +72,15 @@ def run_slow_server(please_stop):
             server_is_ready.go()
         Log.note("SLOW SERVER: "+line)
 
-    proc.send_signal(signal.CTRL_C_EVENT)
+    proc.stop()
+    proc.join()
 
 
 def run_proxy(please_stop):
-    proc = subprocess.Popen(
+    proc = Process(
+        "slow server",
         ["python", "esFrontLine\\app.py", "--settings", "tests/resources/slow_server_settings.json"],
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        bufsize=-1,
-        creationflags=CREATE_NEW_PROCESS_GROUP
+        debug=True
     )
 
     while not please_stop:
@@ -100,7 +91,8 @@ def run_proxy(please_stop):
             proxy_is_ready.go()
         Log.note("PROXY: {{line}}", {"line": line.strip()})
 
-    proc.send_signal(signal.CTRL_C_EVENT)
+    proc.stop()
+    proc.join()
 
 
 def test_slow_streaming():
@@ -112,8 +104,8 @@ def test_slow_streaming():
     proxy_thread = Thread.run("run proxy", run_proxy)
 
     try:
-        proxy_is_ready.wait_for_go()
-        server_is_ready.wait_for_go()
+        proxy_is_ready.wait()()
+        server_is_ready.wait()()
 
         start = time.clock()
         response = requests.get("http://localhost:"+str(PROXY_PORT)+PATH, stream=True)
@@ -125,7 +117,7 @@ def test_slow_streaming():
         if response.status_code != 200:
             Log.error("Expecting a positive response")
 
-    except Exception, e:
+    except Exception as e:
         Log.error("Not expected", e)
     finally:
         slow_server_thread.please_stop.go()
