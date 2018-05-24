@@ -1,26 +1,25 @@
 # encoding: utf-8
 #
-#
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-# Author: Kyle Lahnakoski (kyle@lahnakoski.com)
-#
-import argparse
-import codecs
-import logging
-from logging.handlers import RotatingFileHandler
-import os
+from __future__ import division
+from __future__ import unicode_literals
+
 import random
-from flask import Flask, json
+import time
+
 import flask
 import requests
-import time
+from flask import Flask, json
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
-from auth import HawkAuth, AuthException
-import sys  # REQUIRED FOR DYNAMIC DEBUG
+
+from esFrontLine.auth import HawkAuth, AuthException, logger
+from mo_dots import listwrap
+from mo_future import BytesIO
+from mo_logs import constants, Log, startup, Except
 
 app = Flask(__name__)
 auth = HawkAuth()
@@ -33,24 +32,6 @@ def stream(raw_response):
             return
         yield block
 
-
-def listwrap(value):
-    if value is None:
-        return []
-    elif isinstance(value, list):
-        return value
-    else:
-        return [value]
-
-
-class Except(Exception):
-    def __init__(self, message):
-        super(Exception, self).__init__(self, message)
-        self._message = message
-
-    @property
-    def message(self):
-        return self._message
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'HEAD', 'POST'])
 @app.route('/<path:path>', methods=['GET', 'HEAD', 'POST'])
@@ -70,7 +51,7 @@ def catch_all(path):
         #PICK RANDOM ES
         es = random.choice(listwrap(settings["elasticsearch"]))
 
-        ## SEND REQUEST
+        # SEND REQUEST
         headers = {k: v for k, v in flask.request.headers if v is not None and v != "" and v != "null"}
         headers['content-type'] = 'application/json'
 
@@ -115,10 +96,10 @@ def catch_all(path):
             response_content_length=int(outbound_header["content-length"]) if "content-length" in outbound_header else None
         ))
 
-        ## FORWARD RESPONSE
-        return flask.wrappers.Response(
+        # FORWARD RESPONSE
+        return flask.Response(
             stream(response.raw),
-            direct_passthrough=True, #FOR STREAMING
+            direct_passthrough=True,  # FOR STREAMING
             status=response.status_code,
             headers=outbound_header
         )
@@ -142,39 +123,38 @@ def filter(method, path_string, query):
             if path_string in ["", "/"]:
                 return  # HEAD REQUESTS ARE ALLOWED
             else:
-                raise Except("HEAD requests are generally not allowed")
+                Log.error("HEAD requests are generally not allowed")
 
         path = path_string.split("/")
 
-        ## EXPECTING {index_name} "/" {type_name} "/" {_id}
-        ## EXPECTING {index_name} "/" {type_name} "/_search"
-        ## EXPECTING {index_name} "/_search"
+        # EXPECTING {index_name} "/" {type_name} "/" {_id}
+        # EXPECTING {index_name} "/" {type_name} "/_search"
+        # EXPECTING {index_name} "/_search"
         es_methods = ["_mapping", "_search", "_count"]
         if len(path) == 2:
             if path[-1] not in es_methods:
-                raise Except("request path must end with _mapping or _search")
+                Log.error("request path must end with _mapping or _search")
         elif len(path) == 3:
             if path[-1] not in es_methods:
-                raise Except("request path must end with _mapping or _search")
+                Log.error("request path must end with _mapping or _search")
         else:
-            raise Except('request must be of form: {index_name} "/" {type_name} "/_search" ')
+            Log.error('request must be of form: {index_name} "/" {type_name} "/_search" ')
 
-        ## COMPARE TO WHITE LIST
+        # COMPARE TO WHITE LIST
         if path[0] not in settings["whitelist"]:
-            raise Except('index not in whitelist: {index_name}'.format({"index_name": path[0]}))
+            Log.error('index not in whitelist: {{index_name}}', index_name=path[0])
 
 
-        ## EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
+        # EXPECTING THE QUERY TO AT LEAST HAVE .query ATTRIBUTE
         if path[-1] == "_search" and json.loads(query).get("query", None) is None:
-            raise Except("_search must have query")
+            Log.error("_search must have query")
 
-        ## NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
+        # NO CONTENT ALLOWED WHEN ASKING FOR MAPPING
         if path[-1] == "_mapping" and len(query) > 0:
-            raise Except("Can not provide content when requesting _mapping")
+            Log.error("Can not provide content when requesting _mapping")
 
     except Exception as e:
-        logger.warning(e.message)
-        raise Except("Not allowed: {path}:\n{query}".format(path=path_string, query=query))
+        Log.warning("Not allowed: {{path}}:\n{{query}}", path=path_string, query=query, cause=e)
 
     return path[0]
 
@@ -186,14 +166,13 @@ class WSGICopyBody(object):
         self.application = application
 
     def __call__(self, environ, start_response):
-        from cStringIO import StringIO
 
         length = environ.get('CONTENT_LENGTH', '0')
         length = 0 if length == '' else int(length)
 
         body = environ['wsgi.input'].read(length)
         environ['body_copy'] = body
-        environ['wsgi.input'] = StringIO(body)
+        environ['wsgi.input'] = BytesIO(body)
 
         # Call the wrapped application
         app_iter = self.application(environ, self._sr_callback(start_response))
@@ -208,58 +187,27 @@ class WSGICopyBody(object):
 
         return callback
 
-
+settings = None
 app.wsgi_app = WSGICopyBody(app.wsgi_app)
-
-logger = None
-settings = {}
 
 
 def main():
+    global settings
+
     try:
-        parser = argparse.ArgumentParser()
-        parser.add_argument(*["--settings", "--settings-file", "--settings_file"], **{
-            "help": "path to JSON file with settings",
-            "type": str,
-            "dest": "filename",
-            "default": "./settings.json",
-            "required": False
-        })
-        namespace = parser.parse_args()
-        args = {k: getattr(namespace, k) for k in vars(namespace)}
-
-        if not os.path.exists(args["filename"]):
-            raise Except("Can not file settings file {filename}".format(filename=args["filename"]))
-
-        with codecs.open(args["filename"], "r", encoding="utf-8") as file:
-            json_data = file.read()
-        globals()["settings"] = json.loads(json_data)
-        settings["args"] = args
-        settings["whitelist"] = listwrap(settings.get("whitelist", None))
-
-        globals()["logger"] = logging.getLogger('esFrontLine')
-        logger.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-
-        for d in listwrap(settings["debug"]["log"]):
-            if d.get("filename", None):
-                fh = RotatingFileHandler(**d)
-                fh.setLevel(logging.DEBUG)
-                fh.setFormatter(formatter)
-                logger.addHandler(fh)
-            elif d.get("stream", None) in ("sys.stdout", "sys.stderr"):
-                ch = logging.StreamHandler(stream=eval(d["stream"]))
-                ch.setLevel(logging.DEBUG)
-                ch.setFormatter(formatter)
-                logger.addHandler(ch)
+        settings = startup.read_settings()
+        constants.set(settings.constants)
+        Log.start(settings.debug)
 
         # Setup auth users
-        auth.load_users(settings.get('users'))
+        auth.load_users(settings.users)
 
         HeaderRewriterFix(app, remove_headers=['Date', 'Server'])
-        app.run(**settings["flask"])
+        app.run(**settings.flask)
     except Exception as e:
-        print(str(e))
+        Log.error("Problem with etl", e)
+    finally:
+        Log.stop()
 
 
 if __name__ == '__main__':

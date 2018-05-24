@@ -1,10 +1,22 @@
+# encoding: utf-8
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+from __future__ import division
+from __future__ import unicode_literals
+
+
 from mohawk import Receiver
 import random
 import logging
 import time
 
+from mo_logs import Log
 
 logger = logging.getLogger('esFrontLine')
+logger.setLevel("DEBUG")
 
 class AuthException(Exception):
     '''
@@ -37,13 +49,12 @@ class HawkAuth(object):
                 assert isinstance(resources, list), '"resources" must be JSON list'
                 assert len(resources) > 0, '"resources" cannot be empty'
                 assert isinstance(hawk, dict), '"hawk" must be a JSON dictionary'
-                assert hawk.keys() == ['algorithm', 'id', 'key'], \
-                    '"hawk" can only contains algorithm, id, key.'
+                assert hawk.keys() == {'algorithm', 'id', 'key'}, '"hawk" can only contains algorithm, id, key.'
 
                 self.users[user['hawk']['id']] = user
-                logger.debug('Validated user {id}'.format(**user['hawk']))
+                Log.note('Validated user {{user}}', user)
             except AssertionError as e:
-                raise Exception('Error on user #{}: {}'.format(index+1, e))
+                Log.error('Error on user {{user}}', user=user, cause=e)
 
         logger.info('Loaded {} users'.format(len(self.users)))
 

@@ -2,10 +2,8 @@
 *.iml
 *.pyc
 src
-settings.json
 resources/logs
-esFrontLine/util/.svn
-tests/util/.svn
+.svn
 build
 dist
 *.egg-info

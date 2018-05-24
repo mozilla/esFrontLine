@@ -1,3 +1,14 @@
+# encoding: utf-8
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at http://mozilla.org/MPL/2.0/.
+#
+from __future__ import division
+from __future__ import unicode_literals
+
+from collections import Mapping
+
 from mohawk import Sender
 from elasticsearch.connection import Urllib3HttpConnection
 from elasticsearch.compat import urlencode
@@ -12,9 +23,8 @@ class HawkConnection(Urllib3HttpConnection):
         super(HawkConnection, self).__init__(*args, **kwargs)
 
         # Save credentials
-        assert isinstance(hawk_credentials, dict), 'hawk_credentials should be a dict'
-        assert hawk_credentials.keys() == ['algorithm', 'id', 'key'], \
-            'hawk_credentials can only contains algorithm, id, key.'
+        assert isinstance(hawk_credentials, Mapping), 'hawk_credentials should be a dict'
+        assert hawk_credentials.keys() == {'algorithm', 'id', 'key'}, 'hawk_credentials can only contains algorithm, id, key.'
         self._hawk_credentials = hawk_credentials
 
     def perform_request(self, method, url, params, body, headers=None, *args, **kwargs):
