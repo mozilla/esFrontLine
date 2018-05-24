@@ -21,6 +21,11 @@ from mo_dots import listwrap
 from mo_future import BytesIO
 from mo_logs import constants, Log, startup, Except
 
+settings = {}
+
+logger = logging.getLogger('esFrontLine')
+logger.setLevel(logging.DEBUG)
+
 app = Flask(__name__)
 auth = HawkAuth()
 
@@ -189,7 +194,6 @@ class WSGICopyBody(object):
 
 settings = None
 app.wsgi_app = WSGICopyBody(app.wsgi_app)
-
 
 def main():
     global settings

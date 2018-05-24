@@ -1,4 +1,5 @@
 Flask==0.10.1
 requests==2.3.0
 mohawk==0.3.4
-elasticsearch
+elasticsearch==6.2.0
+responses==0.9.0
