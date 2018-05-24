@@ -1,0 +1,13 @@
+{
+
+    "$ref":"~/private_activedata_frontend6.json#esFrontLine",
+    "url_prefix": "/elasticsearch",
+    "debug": {
+        "trace": true,
+        "log": [
+            {
+                "stream": "sys.stdout"
+            }
+        ]
+    }
+}
