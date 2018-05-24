@@ -19,17 +19,15 @@ from werkzeug.exceptions import abort
 from esFrontLine.auth import HawkAuth, AUTH_EXCEPTION
 from mo_dots import listwrap
 from mo_future import BytesIO
-from mo_logs import constants, Log, startup, Except
+from mo_logs import constants, Log, startup
 
 settings = {}
-
-logger = logging.getLogger('esFrontLine')
-logger.setLevel(logging.DEBUG)
 
 app = Flask(__name__)
 auth = HawkAuth()
 
 DEBUG = False
+
 
 def stream(raw_response):
     while True:
