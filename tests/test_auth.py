@@ -129,6 +129,19 @@ class TestAuthentication(unittest.TestCase):
 
 
     @responses.activate
+    def test_get_on_restricted_index(self):
+        '''
+        Test some GET requests with authentication
+        '''
+        search_url = '/not-allowed/_search'
+
+        # Valid auth + query
+        valid_hawk = mock_hawk('GET', search_url, '{"query":{}}')
+        r = self.client.get(search_url, data='{"query":{}}', headers=valid_hawk)
+        self.assertEqual(r.status_code, 403)
+
+
+    @responses.activate
     def test_user_syntax(self):
         '''
         Test user syntax from settings
