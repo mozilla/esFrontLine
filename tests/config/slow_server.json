@@ -1,8 +1,8 @@
     {
-        "elasticsearch":[{
+        "elasticsearch":{
             "host":"http://localhost",
             "port":9299
-        }],
+        },
         "flask":{
             "host":"0.0.0.0",
             "port":9298,

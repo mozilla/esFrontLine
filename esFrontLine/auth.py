@@ -79,8 +79,6 @@ class HawkAuth(object):
         except Exception as e:
             Log.error(AUTH_EXCEPTION, reason="unexpected", cause=e)
 
-
-
     def check_resource(self, user_id, resource):
         '''
         Check the resource is allowed by comparing with resources for the user

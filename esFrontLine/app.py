@@ -90,7 +90,7 @@ def catch_all(path):
                 timeout=5
             )
         except Exception as e:
-            pass
+            Log.warning("can not forward request", cause=e)
 
         if DEBUG:
             Log.note(
