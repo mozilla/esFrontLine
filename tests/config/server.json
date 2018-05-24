@@ -23,6 +23,7 @@
         }
     ],
     "whitelist": ["repo"],
+    "constants": {"esFrontLine.app.DEBUG": true},
     "debug": {
         "log": [
             {

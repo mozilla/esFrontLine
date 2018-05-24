@@ -16,7 +16,7 @@ from flask import Flask, json
 from werkzeug.contrib.fixers import HeaderRewriterFix
 from werkzeug.exceptions import abort
 
-from esFrontLine.auth import HawkAuth, AuthException, logger
+from esFrontLine.auth import HawkAuth, AUTH_EXCEPTION
 from mo_dots import listwrap
 from mo_future import BytesIO
 from mo_logs import constants, Log, startup, Except
@@ -24,6 +24,7 @@ from mo_logs import constants, Log, startup, Except
 app = Flask(__name__)
 auth = HawkAuth()
 
+DEBUG = False
 
 def stream(raw_response):
     while True:
@@ -39,7 +40,7 @@ def catch_all(path):
     try:
         # Check HAWK authentication before processing request
         user_id = auth.check_user(flask.request)
-        logger.info('Authenticated user {}'.format(user_id))
+        Log.note('Authenticated user {user}', user=user_id)
 
         data = flask.request.environ['body_copy']
         resource = filter(flask.request.method, path, data)
@@ -88,13 +89,15 @@ def catch_all(path):
         except Exception as e:
             pass
 
-        logger.debug("path: {path}, request bytes={request_content_length}, response bytes={response_content_length}".format(
-            path=path,
-            # request_headers=dict(response.headers),
-            request_content_length=len(data),
-            # response_headers=outbound_header,
-            response_content_length=int(outbound_header["content-length"]) if "content-length" in outbound_header else None
-        ))
+        if DEBUG:
+            Log.note(
+                "path: {{path}}, request bytes={{request_content_length}}, response bytes={{response_content_length}}",
+                path=path,
+                # request_headers=dict(response.headers),
+                request_content_length=len(data),
+                # response_headers=outbound_header,
+                response_content_length=int(outbound_header["content-length"]) if "content-length" in outbound_header else None
+            )
 
         # FORWARD RESPONSE
         return flask.Response(
@@ -103,15 +106,12 @@ def catch_all(path):
             status=response.status_code,
             headers=outbound_header
         )
-    except Except as e:
-        logger.warning(e.message)
-        abort(400)
-    except AuthException as e:
-        logger.exception(str(e))
-        abort(403)
     except Exception as e:
-        logger.exception(str(e))
-        abort(400)
+        Log.warning("Can not complete request", cause=e)
+        if AUTH_EXCEPTION in e:
+            abort(403)
+        else:
+            abort(400)
 
 
 def filter(method, path_string, query):

@@ -18,6 +18,9 @@ from mo_logs import startup, constants, Log
 from mo_threads import Process
 
 
+SETUP_SERVER = True  # CHANGE TO False IF YOU WANT THESE TESTS TO USE AN EXISTING SERVER
+
+
 class TestClient(unittest.TestCase):
 
     settings = None
@@ -28,21 +31,23 @@ class TestClient(unittest.TestCase):
         settings = TestClient.settings = startup.read_settings(filename="tests/config/client.json")
         constants.set(settings.constants)
         Log.start(settings.debug)
-        server = TestClient.server = Process(
-            "server",
-            ["python", "esFrontLine/app.py", "--config=tests/config/server.json"],
-            debug=True
-        )
-        while True:
-            line = server.stderr.pop().decode('utf8')
-            if " * Running on " in line:
-                break
+        if SETUP_SERVER:
+            server = TestClient.server = Process(
+                "server",
+                ["python", "esFrontLine/app.py", "--config=tests/config/server.json"],
+                debug=True
+            )
+            while True:
+                line = server.stderr.pop().decode('utf8')
+                if " * Running on " in line:
+                    break
 
 
     @staticmethod
     def tearDownClass():
-        TestClient.server.stop()
-        TestClient.server.join()
+        if SETUP_SERVER:
+            TestClient.server.stop()
+            TestClient.server.join()
 
 
     def test_simple(self):

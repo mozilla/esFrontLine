@@ -1,0 +1,21 @@
+{
+    "elasticsearch": {
+        "host": "http://localhost",
+        "port": 9200
+    },
+    "flask": {
+        "host": "0.0.0.0",
+        "port": 8078,
+        "debug": false,
+        "threaded": true,
+        "processes": 1
+    },
+    "$ref":"~/private.json#esFrontLine",
+    "debug": {
+        "log": [
+            {
+                "stream": "sys.stdout"
+            }
+        ]
+    }
+}

@@ -7,7 +7,7 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-
+from mo_dots import wrap
 from mohawk import Receiver
 import random
 import logging
@@ -15,13 +15,8 @@ import time
 
 from mo_logs import Log
 
-logger = logging.getLogger('esFrontLine')
-logger.setLevel("DEBUG")
 
-class AuthException(Exception):
-    '''
-    Exception occuring during the authentication protocol
-    '''
+AUTH_EXCEPTION = "Authorization Exception: {{reason}}"
 
 
 class HawkAuth(object):
@@ -56,18 +51,18 @@ class HawkAuth(object):
             except AssertionError as e:
                 Log.error('Error on user {{user}}', user=user, cause=e)
 
-        logger.info('Loaded {} users'.format(len(self.users)))
+        Log.note('Loaded {{num}} users', num=len(self.users))
 
     def check_user(self, request):
         '''
         Check HAWK authentication before processing the request
         '''
         if not self.users:
-            logger.info('Authentication disabled')
+            Log.note('Authentication disabled')
             return
 
         if 'Authorization' not in request.headers:
-            raise AuthException('Missing Auth header')
+            Log.error(AUTH_EXCEPTION, reason='Missing Auth header')
 
         # Check the hawk
         try:
@@ -80,24 +75,25 @@ class HawkAuth(object):
                 content_type=request.headers['Content-Type'],
                 seen_nonce=self.build_nonce,
             )
+            return receiver.parsed_header['id']
         except Exception as e:
-            raise AuthException(str(e))
+            Log.error(AUTH_EXCEPTION, reason="unexpected", cause=e)
 
-        return receiver.parsed_header['id']
+
 
     def check_resource(self, user_id, resource):
         '''
         Check the resource is allowed by comparing with resources for the user
         '''
         if not self.users:
-            logger.info('Authentication disabled')
+            Log.note('Authentication disabled')
             return
 
-        user = self.users.get(user_id)
+        user = self.users[user_id]
         if user is None:
-            raise AuthException('Invalid user {}'.format(user_id))
+            Log.error(AUTH_EXCEPTION, reason='Invalid user {}'.format(user_id))
         if resource not in user['resources']:
-            raise AuthException('Resource {} not accessible for this user'.format(resource))
+            Log.error(AUTH_EXCEPTION, reason= 'Resource {} not accessible for this user'.format(resource))
 
         return True
 
@@ -125,7 +121,7 @@ class HawkAuth(object):
         if random.randint(0, 1000) == 0:
             old = time.time() - 3600
             self.seen = {k: v for k, v in self.seen.items() if v >= old}
-            logger.info('Cleaned up Auth nonce cache')
+            Log.note('Cleaned up Auth nonce cache')
 
         # Reject replay
         if self.seen.get(key):
