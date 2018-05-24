@@ -1,0 +1,28 @@
+{
+    "elasticsearch": "http://localhost:5100",
+    "user":
+        {
+            "hawk": {
+                "id": "kyle@example.com",
+                "key": "secret",
+                "algorithm": "sha256"
+            },
+            "resources": [
+                "testing"
+            ]
+        },
+    "tables": ["repo"],
+    "debug": {
+        "log": [
+            {
+                "filename": "./results/logs/client.log",
+                "maxBytes": 10000000,
+                "backupCount": 10,
+                "encoding": "utf8"
+            },
+            {
+                "stream": "sys.stdout"
+            }
+        ]
+    }
+}

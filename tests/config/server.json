@@ -1,0 +1,39 @@
+{
+    "elasticsearch": {
+        "host": "http://localhost",
+        "port": 9200
+    },
+    "flask": {
+        "host": "0.0.0.0",
+        "port": 5100,
+        "debug": false,
+        "threaded": true,
+        "processes": 1
+    },
+    "users": [
+        {
+            "hawk": {
+                "id": "kyle@example.com",
+                "key": "secret",
+                "algorithm": "sha256"
+            },
+            "resources": [
+                "repo"
+            ]
+        }
+    ],
+    "whitelist": ["repo"],
+    "debug": {
+        "log": [
+            {
+                "filename": "./results/logs/app.log",
+                "maxBytes": 10000000,
+                "backupCount": 10,
+                "encoding": "utf8"
+            },
+            {
+                "stream": "sys.stdout"
+            }
+        ]
+    }
+}

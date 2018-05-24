@@ -1,0 +1,4 @@
+Flask==0.10.1
+requests==2.3.0
+mohawk==0.3.4
+elasticsearch
