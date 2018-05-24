@@ -24,7 +24,7 @@ class HawkConnection(Urllib3HttpConnection):
 
         # Save credentials
         assert isinstance(hawk_credentials, Mapping), 'hawk_credentials should be a dict'
-        assert hawk_credentials.keys() == {'algorithm', 'id', 'key'}, 'hawk_credentials can only contains algorithm, id, key.'
+        assert set(hawk_credentials.keys()) == {'algorithm', 'id', 'key'}, 'hawk_credentials can only contains algorithm, id, key.'
         self._hawk_credentials = hawk_credentials
 
     def perform_request(self, method, url, params, body, headers=None, *args, **kwargs):

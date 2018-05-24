@@ -44,7 +44,7 @@ class HawkAuth(object):
                 assert isinstance(resources, list), '"resources" must be JSON list'
                 assert len(resources) > 0, '"resources" cannot be empty'
                 assert isinstance(hawk, dict), '"hawk" must be a JSON dictionary'
-                assert hawk.keys() == {'algorithm', 'id', 'key'}, '"hawk" can only contains algorithm, id, key.'
+                assert set(hawk.keys()) == {'algorithm', 'id', 'key'}, '"hawk" can only contains algorithm, id, key.'
 
                 self.users[user['hawk']['id']] = user
                 Log.note('Validated user {{user}}', user)
