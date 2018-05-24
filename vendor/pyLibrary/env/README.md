@@ -6,18 +6,18 @@ classes are facades that assume content is UTF-8 encoded JSON.
 
 
 
-# emailer
+## emailer
 
 A simple emailer, the primary purpose is to accept a [Data](https://github.com/klahnakoski/mo-dots/blob/dev/docs/README.md)
 of settings.
 
 
-# pulse
+## pulse
 
 For connecting clients to [Mozilla's Pulse](https://pulse.mozilla.org/).
 
 
-# elasticsearch
+## elasticsearch
 
 This module handles the lifecycle of an Elasticsearch index in the context of
 ETL. You only need this module if you are creating and retiring indexes. You
@@ -41,7 +41,7 @@ selecting only the properties it requires.
 
 
 
-# Cluster
+## Cluster
 
 
-# Index
+## Index

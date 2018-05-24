@@ -464,7 +464,7 @@ class MySQL(object):
                 except Exception as e:
                     Log.error("Problem executing SQL:\n{{sql|indent}}", sql=sql, cause=e, stack_depth=1)
 
-    # Insert dictionary of values into table
+    ## Insert dictionary of values into table
     def insert(self, table_name, record):
         keys = record.keys()
 
@@ -718,7 +718,7 @@ def int_list_packer(term, values):
         else:
             return r
     else:
-        Log.error("no packing possible")
+        raise Except("no packing possible")
 
 
 class Transaction(object):

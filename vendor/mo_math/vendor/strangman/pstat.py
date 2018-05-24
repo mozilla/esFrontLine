@@ -82,26 +82,26 @@ array versions of functions amount simply to aliases to built-in array
 functions/methods.  Their inclusion here is for function name consistency.
 """
 
-# CHANGE LOG:
-# ==========
-# 07-11-26 ... edited to work with numpy
-# 01-11-15 ... changed list2string() to accept a delimiter
-# 01-06-29 ... converted exec()'s to eval()'s to make compatible with Py2.1
-# 01-05-31 ... added duplicates() and aduplicates() functions
-# 00-12-28 ... license made GPL, docstring and import requirements
-# 99-11-01 ... changed version to 0.3
-# 99-08-30 ... removed get, getstrings, put, aget, aput (into io.py)
-# 03/27/99 ... added areplace function, made replace fcn recursive
-# 12/31/98 ... added writefc function for ouput to fixed column sizes
-# 12/07/98 ... fixed import problem (failed on collapse() fcn)
+## CHANGE LOG:
+## ==========
+## 07-11-26 ... edited to work with numpy
+## 01-11-15 ... changed list2string() to accept a delimiter
+## 01-06-29 ... converted exec()'s to eval()'s to make compatible with Py2.1
+## 01-05-31 ... added duplicates() and aduplicates() functions
+## 00-12-28 ... license made GPL, docstring and import requirements
+## 99-11-01 ... changed version to 0.3
+## 99-08-30 ... removed get, getstrings, put, aget, aput (into io.py)
+## 03/27/99 ... added areplace function, made replace fcn recursive
+## 12/31/98 ... added writefc function for ouput to fixed column sizes
+## 12/07/98 ... fixed import problem (failed on collapse() fcn)
 ##              added __version__ variable (now 0.2)
-# 12/05/98 ... updated doc-strings
+## 12/05/98 ... updated doc-strings
 ##              added features to collapse() function
 ##              added flat() function for lists
 ##              fixed a broken asortrows()
-# 11/16/98 ... fixed minor bug in aput for 1D arrays
+## 11/16/98 ... fixed minor bug in aput for 1D arrays
 ##
-# 11/08/98 ... fixed aput to output large arrays correctly
+## 11/08/98 ... fixed aput to output large arrays correctly
 
 import string
 import copy

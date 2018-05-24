@@ -154,71 +154,71 @@ SUPPORT FUNCTIONS:  writecc
                     outputpairedstats
                     findwithin
 """
-# CHANGE LOG:
-# ===========
-# 09-07-21 ... added capability for getting the 'proportion' out of l/amannwhitneyu (but comment-disabled)
-# 08-10-31 ... fixed import LinearAlgebra bug before glm fcns
-# 07-11-26 ... conversion for numpy started
-# 07-05-16 ... added Lin's Concordance Correlation Coefficient (alincc) and acov
-# 05-08-21 ... added "Dice's coefficient"
-# 04-10-26 ... added ap2t(), an ugly fcn for converting p-vals to T-vals
-# 04-04-03 ... added amasslinregress() function to do regression on N-D arrays
-# 03-01-03 ... CHANGED VERSION TO 0.6
+## CHANGE LOG:
+## ===========
+## 09-07-21 ... added capability for getting the 'proportion' out of l/amannwhitneyu (but comment-disabled)
+## 08-10-31 ... fixed import LinearAlgebra bug before glm fcns
+## 07-11-26 ... conversion for numpy started
+## 07-05-16 ... added Lin's Concordance Correlation Coefficient (alincc) and acov
+## 05-08-21 ... added "Dice's coefficient"
+## 04-10-26 ... added ap2t(), an ugly fcn for converting p-vals to T-vals
+## 04-04-03 ... added amasslinregress() function to do regression on N-D arrays
+## 03-01-03 ... CHANGED VERSION TO 0.6
 ##              fixed atsem() to properly handle limits=None case
 ##              improved histogram and median functions (estbinwidth) and
 ##                   fixed atvar() function (wrong answers for neg numbers?!?)
-# 02-11-19 ... fixed attest_ind and attest_rel for div-by-zero Overflows
-# 02-05-10 ... fixed lchisqprob indentation (failed when df=even)
-# 00-12-28 ... removed aanova() to separate module, fixed licensing to
+## 02-11-19 ... fixed attest_ind and attest_rel for div-by-zero Overflows
+## 02-05-10 ... fixed lchisqprob indentation (failed when df=even)
+## 00-12-28 ... removed aanova() to separate module, fixed licensing to
 ##                   match Python License, fixed doc string & imports
-# 00-04-13 ... pulled all "global" statements, except from aanova()
+## 00-04-13 ... pulled all "global" statements, except from aanova()
 ##              added/fixed lots of documentation, removed io.py dependency
 ##              changed to version 0.5
-# 99-11-13 ... added asign() function
-# 99-11-01 ... changed version to 0.4 ... enough incremental changes now
-# 99-10-25 ... added acovariance and acorrelation functions
-# 99-10-10 ... fixed askew/akurtosis to avoid divide-by-zero errors
+## 99-11-13 ... added asign() function
+## 99-11-01 ... changed version to 0.4 ... enough incremental changes now
+## 99-10-25 ... added acovariance and acorrelation functions
+## 99-10-10 ... fixed askew/akurtosis to avoid divide-by-zero errors
 ##              added aglm function (crude, but will be improved)
-# 99-10-04 ... upgraded acumsum, ass, asummult, asamplevar, avar, etc. to
+## 99-10-04 ... upgraded acumsum, ass, asummult, asamplevar, avar, etc. to
 ##                   all handle lists of 'dimension's and keepdims
 ##              REMOVED ar0, ar2, ar3, ar4 and replaced them with around
 ##              reinserted fixes for abetai to avoid math overflows
-# 99-09-05 ... rewrote achisqprob/aerfcc/aksprob/afprob/abetacf/abetai to
+## 99-09-05 ... rewrote achisqprob/aerfcc/aksprob/afprob/abetacf/abetai to
 ##                   handle multi-dimensional arrays (whew!)
-# 99-08-30 ... fixed l/amoment, l/askew, l/akurtosis per D'Agostino (1990)
+## 99-08-30 ... fixed l/amoment, l/askew, l/akurtosis per D'Agostino (1990)
 ##              added anormaltest per same reference
 ##              re-wrote azprob to calc arrays of probs all at once
-# 99-08-22 ... edited attest_ind printing section so arrays could be rounded
-# 99-08-19 ... fixed amean and aharmonicmean for non-error(!) overflow on
+## 99-08-22 ... edited attest_ind printing section so arrays could be rounded
+## 99-08-19 ... fixed amean and aharmonicmean for non-error(!) overflow on
 ##                   short/byte arrays (mean of # s btw 100-300 = -150??)
-# 99-08-09 ... fixed asum so that the None case works for Byte arrays
-# 99-08-08 ... fixed 7/3 'improvement' to handle t-calcs on N-D arrays
-# 99-07-03 ... improved attest_ind, attest_rel (zero-division errortrap)
-# 99-06-24 ... fixed bug(?) in attest_ind (n1=a.shape[0])
-# 04/11/99 ... added asignaltonoise, athreshold functions, changed all
+## 99-08-09 ... fixed asum so that the None case works for Byte arrays
+## 99-08-08 ... fixed 7/3 'improvement' to handle t-calcs on N-D arrays
+## 99-07-03 ... improved attest_ind, attest_rel (zero-division errortrap)
+## 99-06-24 ... fixed bug(?) in attest_ind (n1=a.shape[0])
+## 04/11/99 ... added asignaltonoise, athreshold functions, changed all
 ##                   max/min in array section to N.maximum/N.minimum,
 ##                   fixed square_of_sums to prevent integer overflow
-# 04/10/99 ... !!! Changed function name ... sumsquared ==> square_of_sums
-# 03/18/99 ... Added ar0, ar2, ar3 and ar4 rounding functions
-# 02/28/99 ... Fixed aobrientransform to return an array rather than a list
-# 01/15/99 ... Essentially ceased updating list-versions of functions (!!!)
-# 01/13/99 ... CHANGED TO VERSION 0.3
+## 04/10/99 ... !!! Changed function name ... sumsquared ==> square_of_sums
+## 03/18/99 ... Added ar0, ar2, ar3 and ar4 rounding functions
+## 02/28/99 ... Fixed aobrientransform to return an array rather than a list
+## 01/15/99 ... Essentially ceased updating list-versions of functions (!!!)
+## 01/13/99 ... CHANGED TO VERSION 0.3
 ##              fixed bug in a/lmannwhitneyu p-value calculation
-# 12/31/98 ... fixed variable-name bug in ldescribe
-# 12/19/98 ... fixed bug in findwithin (fcns needed pstat. prefix)
-# 12/16/98 ... changed amedianscore to return float (not array) for 1 score
-# 12/14/98 ... added atmin and atmax functions
+## 12/31/98 ... fixed variable-name bug in ldescribe
+## 12/19/98 ... fixed bug in findwithin (fcns needed pstat. prefix)
+## 12/16/98 ... changed amedianscore to return float (not array) for 1 score
+## 12/14/98 ... added atmin and atmax functions
 ##              removed umath from import line (not needed)
 ##              l/ageometricmean modified to reduce chance of overflows (take
 ##                   nth root first, then multiply)
-# 12/07/98 ... added __version__variable (now 0.2)
+## 12/07/98 ... added __version__variable (now 0.2)
 ##              removed all 'stats.' from anova() fcn
-# 12/06/98 ... changed those functions (except shellsort) that altered
+## 12/06/98 ... changed those functions (except shellsort) that altered
 ##                   arguments in-place ... cumsum, ranksort, ...
 ##              updated (and fixed some) doc-strings
-# 12/01/98 ... added anova() function (requires NumPy)
+## 12/01/98 ... added anova() function (requires NumPy)
 ##              incorporated Dispatch class
-# 11/12/98 ... added functionality to amean, aharmonicmean, ageometricmean
+## 11/12/98 ... added functionality to amean, aharmonicmean, ageometricmean
 ##              added 'asum' function (added functionality to N.add.reduce)
 ##              fixed both moment and amoment (two errors)
 ##              changed name of skewness and askewness to skew and askew

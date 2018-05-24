@@ -180,7 +180,7 @@ def _replace_locals(node, doc_path):
 
 
 ###############################################################################
-# SCHEME LOADERS ARE BELOW THIS LINE
+## SCHEME LOADERS ARE BELOW THIS LINE
 ###############################################################################
 
 def get_file(ref, url):
