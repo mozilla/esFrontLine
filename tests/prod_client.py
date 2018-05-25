@@ -27,7 +27,7 @@ def main(elasticsearch, users, url_prefix, kwargs):
     index = user.resources[0]
     Log.note("Query {{index}}", index=index)
     Log.note('Count: {{result}}', result=es.count(index=index))
-    response = es.search(index=user['resources'][0], body={'query': {}})
+    response = es.search(index=user['resources'][0], body={"query": {"match_all": {}}, "size": 0})
     Log.note('Query:\n{{result}}', result=response)
 
 
@@ -40,3 +40,5 @@ if __name__ == '__main__':
         main(settings)
     except Exception as e:
         Log.error("problem", cause=e)
+    finally:
+        Log.stop()
