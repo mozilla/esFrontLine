@@ -5,11 +5,8 @@ from setuptools import setup
 
 root = os.path.abspath(os.path.dirname(__file__))
 path = lambda *p: os.path.join(root, *p)
-try:
-    long_desc = open(path('README.txt')).read()
-except Exception:
-    long_desc = "<Missing README.txt>"
-    print "Missing README.txt"
+assert os.path.exists('README.txt'), 'Missing README.txt'
+long_desc = open(path('README.txt')).read()
 
 setup(
     name='esFrontLine',
