@@ -1,13 +1,13 @@
 esFrontLine
 ===========
 
-Limit restful requests to backend ElasticSearch cluster:  Queries only.
+Limit restful requests to backend ElasticSearch cluster:  Queries for the public, 
 
 
 Requirements
 ------------
 
-  * Python 2.7
+  * Python 2.7 or 3.6.2+
   * An ElasticSearch cluster to forward queries to
 
 
@@ -24,18 +24,17 @@ Setup
 You must write your own setting.json file with the following properties set:
 
   * **elasticsearch** - (Array of) ElasticSearch nodes
-
   * **elasticsearch.host** - URL of the ElasticSearch node that will accept query requests
-
   * **elasticsearch.port** - port for ES (default = 9200)
-
   * **flask** - flask.run() parameters (default port = 5000)
-
   * **debug** - turn on debugging
-
   * **whitelist** - list of indexes that are allowed
-
   * **users** - list of allowed HAWK users, with their linked resources
+  * **users.resources** - list of indexes the user is allowed
+  * **users.hawk** - object of [Hawk credentials](https://github.com/hueniverse/hawk/blob/master/README.md)
+  * **users.hawk.id** - any human readable name to identify the user or application
+  * **users.hawk.key** -
+  * **users.hawk.algorithm**: always "sha256" for now
 
 Here is an example of my ```settings.json``` file
 
