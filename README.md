@@ -27,14 +27,14 @@ You must write your own setting.json file with the following properties set:
   * **elasticsearch.host** - URL of the ElasticSearch node that will accept query requests
   * **elasticsearch.port** - port for ES (default = 9200)
   * **flask** - flask.run() parameters (default port = 5000)
-  * **debug** - turn on debugging
   * **whitelist** - list of indexes that are allowed
   * **users** - list of allowed HAWK users, with their linked resources
   * **users.resources** - list of indexes the user is allowed
   * **users.hawk** - object of [Hawk credentials](https://github.com/hueniverse/hawk/blob/master/README.md)
   * **users.hawk.id** - any human readable name to identify the user or application
-  * **users.hawk.key** -
+  * **users.hawk.key** - the secret value held by both endpoints and not shared with anyone
   * **users.hawk.algorithm**: always "sha256" for now
+  * **debug** - for debugging
 
 Here is an example of my ```settings.json``` file
 
