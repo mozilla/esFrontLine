@@ -1,25 +1,21 @@
-esFrontLine
-===========
+# esFrontLine
 
 Limit restful requests to backend ElasticSearch cluster:  Queries for the public, 
 
 
-Requirements
-------------
+## Requirements
 
   * Python 2.7 or 3.6.2+
   * An ElasticSearch cluster to forward queries to
 
 
-Install
-------------
+## Install
 
 I will assume you have Python installed (if not, here are [Windows7 instructions](https://github.com/klahnakoski/pyLibrary#windows-7-install-instructions-))
 
     pip install esFrontLine
 
-Setup
------
+## Setup
 
 You must write your own setting.json file with the following properties set:
 
@@ -85,12 +81,10 @@ Here is an example of my ```settings.json``` file
 
     }
 
-Execution
----------
+## Execution
 
     python app.py --settings-file <path_to_file_with_JSON_settings>
 
-Code Source
------------
+## Code Source
 
 [https://github.com/klahnakoski/esFrontLine](https://github.com/klahnakoski/esFrontLine)
