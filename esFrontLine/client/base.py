@@ -4,33 +4,22 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this file,
 # You can obtain one at http://mozilla.org/MPL/2.0/.
 #
-from __future__ import division
-from __future__ import unicode_literals
 
 from collections import Mapping
-
 from mohawk import Sender
-from elasticsearch.connection import Urllib3HttpConnection
 from elasticsearch.compat import urlencode
 
-
-class HawkConnection(Urllib3HttpConnection):
-    '''
-    Connection class to use with an elasticsearch python client
-    '''
+class BaseHawkConnection(object):
 
     def __init__(self, hawk_credentials=None, *args, **kwargs):
-        super(HawkConnection, self).__init__(*args, **kwargs)
+        super(BaseHawkConnection, self).__init__(*args, **kwargs)
 
         # Save credentials
         assert isinstance(hawk_credentials, Mapping), 'hawk_credentials should be a dict'
         assert set(hawk_credentials.keys()) == {'algorithm', 'id', 'key'}, 'hawk_credentials can only contains algorithm, id, key.'
         self._hawk_credentials = hawk_credentials
 
-    def perform_request(self, method, url, params, body, headers=None, *args, **kwargs):
-        '''
-        Build a new HAWK header on each request
-        '''
+    def add_hawk_authentication(self, method, url, params, body, headers=None):
         # Build full url as in Urllib3HttpConnection
         local_url = self.url_prefix + url
         if params:
@@ -40,8 +29,10 @@ class HawkConnection(Urllib3HttpConnection):
         # Get content type from both headers source
         if headers and 'content-type' in headers:
             content_type = headers['content-type']
-        else:
+        elif hasattr(self, 'headers'):
             content_type = self.headers.get('content-type', 'application/json')
+        else:
+            content_type = 'application/json'
 
         # Build HAWK header
         sender = Sender(
@@ -56,4 +47,4 @@ class HawkConnection(Urllib3HttpConnection):
         hawk_headers = headers and headers.copy() or {}
         hawk_headers['Authorization'] = sender.request_header
 
-        return super(HawkConnection, self).perform_request(method, url, params, body, headers=hawk_headers, *args, **kwargs)
+        return hawk_headers
