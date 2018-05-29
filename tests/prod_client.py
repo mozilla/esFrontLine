@@ -2,7 +2,7 @@ import json
 
 from elasticsearch import Elasticsearch
 
-from esFrontLine.connection import HawkConnection
+from esFrontLine.client import HawkConnection
 from mo_kwargs import override
 from mo_logs import startup, constants, Log
 
