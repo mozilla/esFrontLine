@@ -30,9 +30,11 @@ setup(
             "esFrontLine = esFrontLine.app:main"
         ]
     },
-    classifiers=[  #https://pypi.python.org/pypi?%3Aaction=list_classifiers
-        "Development Status :: 2 - Pre-Alpha",
+    classifiers=[  # https://pypi.python.org/pypi?%3Aaction=list_classifiers
+        "Development Status :: 4 - Beta",
         "Topic :: Internet :: Proxy Servers",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 2.7",
     ]
 )
