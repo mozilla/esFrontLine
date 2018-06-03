@@ -12,7 +12,7 @@ import unittest
 
 import elasticsearch
 
-from esFrontLine.connection import HawkConnection
+from esFrontLine.client import HawkConnection
 from mo_dots import listwrap
 from mo_logs import startup, constants, Log
 from mo_threads import Process
