@@ -7,14 +7,12 @@
 from __future__ import division
 from __future__ import unicode_literals
 
-from mo_dots import wrap
-from mohawk import Receiver
 import random
-import logging
 import time
 
-from mo_logs import Log
+from mohawk import Receiver
 
+from mo_logs import Log
 
 AUTH_EXCEPTION = "Authorization Exception: {{reason}}"
 

@@ -8,8 +8,8 @@ from __future__ import division
 from __future__ import unicode_literals
 
 import random
-import time
 import re
+import time
 
 import flask
 import requests
