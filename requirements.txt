@@ -2,7 +2,7 @@ mo-dots
 mo-logs
 mo-future
 Flask==0.10.1
-requests==2.3.0
+requests==2.18.4
 mohawk==0.3.4
 elasticsearch==6.2.0
 responses==0.9.0
