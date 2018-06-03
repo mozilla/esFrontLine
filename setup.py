@@ -1,12 +1,12 @@
 import os
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 root = os.path.abspath(os.path.dirname(__file__))
 path = lambda *p: os.path.join(root, *p)
-assert os.path.exists('README.txt'), 'Missing README.txt'
-long_desc = open(path('README.txt')).read()
+assert os.path.exists('README.md'), 'Missing README.md'
+long_desc = open(path('README.md')).read()
 
 setup(
     name='esFrontLine',
@@ -17,7 +17,7 @@ setup(
     author_email='kyle@lahnakoski.com',
     url='https://github.com/klahnakoski/esFrontLine',
     license='MPL 2.0',
-    packages=['esFrontLine'],
+    packages=find_packages(),
     install_requires=[
         'Flask==0.10.1',
         'requests==2.3.0',

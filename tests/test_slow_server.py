@@ -49,7 +49,7 @@ class TestSlowSever(unittest.TestCase):
                     if i == 0:
                         self.assertLess(duration, 10, "should have something by now")
                 # self.assertEqual(response.status_code, 200, "Expecting a positive response")
-            self.assertGreater(timer.duration.seconds, 10, "expecting slkow server to talk a while")
+            self.assertGreater(timer.duration.seconds, 10, "expecting slow server to talk a while")
         finally:
             slow_server_thread.please_stop.go()
             proxy_thread.please_stop.go()

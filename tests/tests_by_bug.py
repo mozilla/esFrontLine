@@ -1,22 +1,31 @@
 import unittest
 
 import requests
+from mo_dots import listwrap
+from mo_future import text_type
 
-from mo_logs import Log
+from mo_logs import Log, constants, startup
 from mo_threads import Signal, Process, Thread
-
-WHITELISTED = "public_bugs"  # ENSURE THIS IS IN THE test_settings.json WHITELIST
-NOT_WHITELISTED = "bug_hierarchy"
-
-url = "http://localhost:9292"
 
 
 class TestByBug(unittest.TestCase):
     app = None
+    whiltelisted = None  # ENSURE THIS IS IN THE test_settings.json WHITELIST
+    NOT_WHITELISTED = "this-is-not-an-index"
+    url = None
+
 
     @classmethod
     def setUpClass(cls):
         TestByBug.app = Thread.run("run app", run_app)
+
+        # PEEK AT SERVER CONFIG TO GET TEST PARAMETERS
+        settings = startup.read_settings(filename="tests/config/test_settings.json")
+        constants.set(settings.constants)
+        Log.start(settings.debug)
+
+        TestByBug.url = "http://localhost:" + text_type(settings.flask.port)
+        TestByBug.whiltelisted = listwrap(settings.whiltelist)[0]
 
     @classmethod
     def tearDownClass(cls):
@@ -25,23 +34,23 @@ class TestByBug(unittest.TestCase):
 
     def test_943465(self):
         # https://bugzilla.mozilla.org/show_bug.cgi?id=943465
-        response = request("GET", url + "/_cluster/nodes/_local")
+        response = request("GET", self.url + "/_cluster/nodes/_local")
         if response.status_code != 400:
             Log.error("should not allow")
 
-        response = request("GET", url + "/_cluster/nodes/stats")
+        response = request("GET", self.url + "/_cluster/nodes/stats")
         if response.status_code != 400:
             Log.error("should not allow")
 
     def test_943472(self):
         # https://bugzilla.mozilla.org/show_bug.cgi?id=943472
-        response = request("GET", url + "/" + WHITELISTED + "/_stats/")
+        response = request("GET", self.url + "/" + self.whiltelisted + "/_stats/")
         if response.status_code != 400:
             Log.error("should not allow")
 
     def test_943478(self):
         # https://bugzilla.mozilla.org/show_bug.cgi?id=943478
-        response = request("POST", url + "/" + NOT_WHITELISTED + "/_search", data="""
+        response = request("POST", self.url + "/" + self.NOT_WHITELISTED + "/_search", data="""
         {
             "query":{"filtered":{
                 "query":{"match_all":{}}
@@ -55,7 +64,7 @@ class TestByBug(unittest.TestCase):
             Log.error("should not allow")
 
         # VERIFY ALLOWED INDEX GETS THROUGH
-        response = request("POST", url + "/" + WHITELISTED + "/_search", data="""
+        response = request("POST", self.url + "/" + self.whiltelisted + "/_search", data="""
         {
             "query":{"filtered":{
                 "query":{"match_all":{}},
@@ -72,22 +81,22 @@ class TestByBug(unittest.TestCase):
     def test_allow_3path_mapping(self):
         # WE SHOULD ALLOW -mapping WITH INDEX AND TYPE IN PATH
         # http://klahnakoski-es.corp.tor1.mozilla.com:9204/bugs/bug_version/_mapping
-        response = request("GET", url + "/" + WHITELISTED + "/bug_version/_mapping")
+        response = request("GET", self.url + "/" + self.whitelisted + "/bug_version/_mapping")
         if response.status_code != 200:
             Log.error("should be allowed")
 
     def test_allow_head_request(self):
         # WE SHOULD ALLOW HEAD REQUESTS TO /
-        response = request("HEAD", url + "/")
+        response = request("HEAD", self.url + "/")
         if response.status_code != 200:
             Log.error("should be allowed")
 
-        response = request("HEAD", url)
+        response = request("HEAD", self.url)
         if response.status_code != 200:
             Log.error("should be allowed")
 
         # EVEN HEAD REQUESTS TO WHITELISTED INDEXES WILL BE DENIED
-        response = request("HEAD", url + "/" + WHITELISTED + "/bug_version/_mapping")
+        response = request("HEAD", self.url + "/" + self.whitelisted + "/bug_version/_mapping")
         if response.status_code == 200:
             Log.error("should NOT be allowed")
 
@@ -113,7 +122,7 @@ server_is_ready = Signal()
 def run_app(please_stop):
     proc = Process(
         "app",
-        ["python", "esFrontLine\\app.py", "--settings", "tests/resources/test_settings.json"],
+        ["python", "esFrontLine\\app.py", "--settings", "tests/config/test_settings.json"],
         debug=True
     )
 

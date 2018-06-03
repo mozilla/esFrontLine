@@ -9,7 +9,7 @@ from __future__ import unicode_literals
 
 from elasticsearch import Elasticsearch
 
-from esFrontLine.client.sync import HawkConnection
+from esFrontLine.client import HawkConnection
 from mo_kwargs import override
 from mo_logs import startup, constants, Log
 
